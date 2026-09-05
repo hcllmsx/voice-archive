@@ -158,7 +158,7 @@ window.VoiceRecorder = (function () {
     }
 
     if (!supported()) {
-      return Promise.reject(new Error('当前浏览器不支持录音，请用 Safari 或 Chrome 打开'));
+      return Promise.reject(new Error('当前环境不能调用麦克风：请确认网址是 https://，并用系统浏览器（Chrome / Edge / Safari）打开'));
     }
 
     // 关键：三个「增强」选项全部关闭

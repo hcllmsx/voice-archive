@@ -32,6 +32,7 @@
     standalone: false,
     openCount: 0,
     installDismissed: false,
+    envDismissed: false,
     backupMuted: false,
     sinceBackup: 0,
     raf: 0,
@@ -495,7 +496,7 @@
 
   function startRecord() {
     if (!VR.supported()) {
-      toast('当前浏览器不支持录音，请用 Safari 或 Chrome 打开');
+      toast('当前环境不能录音，页面上方有原因说明');
       return;
     }
     ensureRecorder().start().then(function () {
@@ -1316,7 +1317,7 @@
     const steps = isIos ? C.TEXTS.installIos : C.TEXTS.installAndroid;
     openModal(
       '<h3 class="modal-title">' + esc(C.TEXTS.installTitle) + '</h3>' +
-      '<p class="modal-text muted">' + (isIos ? 'iPhone / iPad（Safari）' : '安卓（Chrome）') + '</p>' +
+      '<p class="modal-text muted">' + (isIos ? 'iPhone / iPad（Safari）' : '安卓（Chrome / Edge）') + '</p>' +
       '<ol class="steps">' + steps.map(function (s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ol>' +
       '<p class="modal-text muted small">不添加也能用，只是录音被系统清理的风险更高一些。</p>' +
       '<div class="modal-actions col">' +
@@ -1375,6 +1376,7 @@
       case 'go-settings': go('settings'); break;
       case 'go-install': installGuide(); break;
       case 'install-dismiss': dismissInstall(); break;
+      case 'env-dismiss': dismissEnvBanner(); break;
 
       case 'new-project': newProjectForm(); break;
       case 'create-project': createProject(); break;
@@ -1501,6 +1503,54 @@
   }
 
   /* ================================================================== */
+  /* 环境横幅：无法录音时的常驻提示，手动关闭                              */
+  /* ================================================================== */
+  function secureOrigin() {
+    return location.protocol === 'https:' ||
+      location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+  }
+
+  /** 返回无法录音的原因；能录音就返回 null */
+  function envProblem() {
+    if (VR.supported()) return null;
+    if (!secureOrigin()) {
+      return {
+        title: '这个页面不是 https://，麦克风被浏览器禁用了',
+        body: '当前地址是「' + esc(location.host) + '」。浏览器只允许 https://（或 localhost）页面调用麦克风，' +
+          '所以 Edge、Chrome、Safari 在这里都无法录音。请改用部署后的正式 https:// 链接访问；' +
+          '本地调试请用 http://localhost。'
+      };
+    }
+    return {
+      title: '当前浏览器无法录音',
+      body: '这个浏览器（或应用内网页）缺少调用麦克风所需的能力。请复制本页网址，' +
+        '换系统浏览器打开——Chrome、Edge、Safari 都可以。'
+    };
+  }
+
+  function envBanner() {
+    const el = document.getElementById('env-banner');
+    if (!el) return;
+    const p = state.envDismissed ? null : envProblem();
+    el.hidden = !p;
+    el.innerHTML = p ? (
+      '<div class="env-banner-inner">' +
+      '<div class="env-banner-text">' +
+      '<b class="env-banner-title">' + esc(p.title) + '</b>' +
+      '<span class="env-banner-body">' + esc(p.body) + '</span>' +
+      '</div>' +
+      '<button type="button" class="env-banner-close" data-act="env-dismiss" aria-label="关闭提示">✕</button>' +
+      '</div>'
+    ) : '';
+  }
+
+  function dismissEnvBanner() {
+    state.envDismissed = true;
+    const el = document.getElementById('env-banner');
+    if (el) { el.hidden = true; el.innerHTML = ''; }
+  }
+
+  /* ================================================================== */
   /* 初始化                                                             */
   /* ================================================================== */
   function detectStandalone() {
@@ -1571,10 +1621,7 @@
     const v = routeFromHash();
     state.view = (v !== 'home' && !state.project) ? 'home' : v;
     render();
-
-    if (!VR.supported()) {
-      toast('当前环境不支持录音，请用 Safari 或 Chrome 打开');
-    }
+    envBanner();
   }
 
   if (document.readyState === 'loading') {

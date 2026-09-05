@@ -296,7 +296,7 @@ window.Content = (function () {
       '点右上角「添加」'
     ],
     installAndroid: [
-      '点 Chrome 右上角「⋮」',
+      '点浏览器右上角「⋮」（Chrome / Edge）',
       '选「添加到主屏幕」或「安装应用」',
       '确认'
     ],
