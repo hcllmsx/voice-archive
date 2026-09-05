@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>声音留档</title>
+<meta name="description" content="把重要的人真实的声音，一句一句录下来，导出成 GPT-SoVITS 训练包。录音只存在你的设备上。">
+<meta name="author" content="火车啦啦 (hcllmsx)">
+<meta name="theme-color" content="#FDFBF7">
+
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="声音留档">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="wrap">
+  <main id="view"></main>
+</div>
+
+<div id="modal" class="modal" hidden></div>
+<div id="toast"></div>
+
+<noscript>
+  <p style="padding:24px;text-align:center">
+    这个应用需要开启 JavaScript 才能录音。
+  </p>
+</noscript>
+
+<!-- 无框架、无构建工具，按依赖顺序加载 -->
+<script src="content.js"></script>
+<script src="db.js"></script>
+<script src="zip.js"></script>
+<script src="recorder.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
