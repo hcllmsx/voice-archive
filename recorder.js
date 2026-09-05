@@ -158,7 +158,10 @@ window.VoiceRecorder = (function () {
     }
 
     if (!supported()) {
-      return Promise.reject(new Error('当前环境不能调用麦克风：请确认网址是 https://，并用系统浏览器（Chrome / Edge / Safari）打开'));
+      const msg = (window.I18N && window.I18N.T)
+        ? window.I18N.T('micPrepFail')
+        : '当前环境不能调用麦克风：请确认网址是 https://，并用系统浏览器（Chrome / Edge / Safari）打开';
+      return Promise.reject(new Error(msg));
     }
 
     // 关键：三个「增强」选项全部关闭
@@ -364,7 +367,10 @@ window.VoiceRecorder = (function () {
         };
         const fail = function (err) {
           try { ctx.close(); } catch (e) {}
-          reject(err || new Error('这个音频格式读不出来，试试转成 wav 或 m4a'));
+          const msg = (window.I18N && window.I18N.T)
+            ? window.I18N.T('audioDecodeFail')
+            : '这个音频格式读不出来，试试转成 wav 或 m4a';
+          reject(err || new Error(msg));
         };
         try {
           const p = ctx.decodeAudioData(reader.result, done, fail);
@@ -373,7 +379,11 @@ window.VoiceRecorder = (function () {
           fail(e);
         }
       };
-      reader.onerror = function () { reject(new Error('文件读取失败')); };
+      reader.onerror = function () {
+        reject(new Error((window.I18N && window.I18N.T)
+          ? window.I18N.T('toastFileReadFail')
+          : '文件读取失败'));
+      };
       reader.readAsArrayBuffer(file);
     });
   }

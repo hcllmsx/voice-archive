@@ -6,13 +6,14 @@
  * 预缓存应用外壳，之后同源 GET 走「缓存优先 + 后台更新」。
  */
 
-var CACHE = 'voice-archive-v2';
+var CACHE = 'voice-archive-v3';
 
 var SHELL = [
   './',
   './index.html',
   './styles.css',
   './content.js',
+  './i18n.js',
   './db.js',
   './zip.js',
   './recorder.js',

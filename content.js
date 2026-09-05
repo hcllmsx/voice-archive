@@ -632,14 +632,54 @@ Q：训练到一半停电了 / 不小心关了窗口怎么办？
   /* 工具方法                                                            */
   /* ------------------------------------------------------------------ */
 
-  /** 按 id 取年龄段 */
-  function ageGroup(id) {
-    return AGE_GROUPS.filter(function (g) { return g.id === id; })[0] || AGE_GROUPS[0];
+  /** 英文覆盖层（i18n.js 加载后可用；未加载或无覆盖时返回 null） */
+  function enPatch() {
+    return (window.I18N && window.I18N.GUIDE_EN) || null;
   }
 
-  /** 按 code 取语言 */
-  function language(code) {
-    return LANGUAGES.filter(function (l) { return l.code === code; })[0] || LANGUAGES[0];
+  /** 用 patch 覆盖 base 的同名字段，缺失字段回退 base */
+  function ov(base, patch) {
+    const out = {};
+    Object.keys(base).forEach(function (k) {
+      out[k] = (patch[k] !== undefined) ? patch[k] : base[k];
+    });
+    return out;
+  }
+
+  /** 用带 {d} 占位的模板生成方言相关文案；无模板时回退中文拼接 */
+  function tpl(patchUi, key, d, fallback) {
+    const t = (patchUi && patchUi[key]) ? patchUi[key] : fallback;
+    return t.split('{d}').join(d);
+  }
+
+  /** 按 id 取年龄段（lang='en' 时 label/range/duration/notes/questions 用英文） */
+  function ageGroup(id, lang) {
+    const base = AGE_GROUPS.filter(function (g) { return g.id === id; })[0] || AGE_GROUPS[0];
+    if (lang === 'en') {
+      const p = enPatch();
+      if (p && p.ageGroups && p.ageGroups[base.id]) return ov(base, p.ageGroups[base.id]);
+    }
+    return base;
+  }
+
+  /** 按 code 取语言（lang='en' 时 label/hint 用英文） */
+  function language(code, lang) {
+    const base = LANGUAGES.filter(function (l) { return l.code === code; })[0] || LANGUAGES[0];
+    if (lang === 'en') {
+      const p = enPatch();
+      if (p && p.languages && p.languages[base.code]) return ov(base, p.languages[base.code]);
+    }
+    return base;
+  }
+
+  /** 按 id 取项目用途（lang='en' 时 label/hint 用英文） */
+  function purpose(id, lang) {
+    const base = PURPOSES.filter(function (x) { return x.id === id; })[0] || PURPOSES[0];
+    if (lang === 'en') {
+      const p = enPatch();
+      if (p && p.purposes && p.purposes[base.id]) return ov(base, p.purposes[base.id]);
+    }
+    return base;
   }
 
   /** 导出给 GPT-SoVITS 用的训练语种代码 */
@@ -648,43 +688,63 @@ Q：训练到一半停电了 / 不小心关了窗口怎么办？
     return l.train || l.code;
   }
 
+  /** 导出包里的操作说明文档（界面语言为英文时给英文版） */
+  function nextSteps(lang) {
+    return (lang === 'en' && window.I18N && window.I18N.NEXT_STEPS_EN)
+      ? window.I18N.NEXT_STEPS_EN
+      : NEXT_STEPS;
+  }
+
+  /**
+   * 录音页顶部追加的方言提示（给操作者看，lang = 界面语言）
+   * 只有填了方言才返回内容
+   */
+  function dialectNote(dialect, lang) {
+    const d = (dialect || '').trim();
+    if (!d) return '';
+    const p = (lang === 'en') ? enPatch() : null;
+    return tpl(p && p.ui, 'dialectNote', d,
+      '他会说' + d + '。不要要求他说标准普通话，方言本身就是要留下来的东西。');
+  }
+
   /**
    * 组装某个项目的录音任务队列
    * 顺序：必录清单（逐条展开）→ 引导问题
+   * @param guideLang 引导问题的语言（念给被录者听的，跟随项目主要语言）
+   * @param uiLang    分组标题 / 提示的语言（给操作者看的，跟随界面语言）
    * @returns {Array<{id:string,group:string,groupTitle:string,label:string,tip:string}>}
    */
-  /**
-   * 录音页顶部追加的方言提示
-   * 只有填了方言才返回内容
-   */
-  function dialectNote(dialect) {
+  function buildTasks(groupId, dialect, guideLang, uiLang) {
+    const gl = guideLang || 'zh';
+    const ui = uiLang || gl;
+    const base = AGE_GROUPS.filter(function (g) { return g.id === groupId; })[0] || AGE_GROUPS[0];
+    const g = ageGroup(groupId, gl);
     const d = (dialect || '').trim();
-    if (!d) return '';
-    return '他会说' + d + '。不要要求他说标准普通话，' +
-      '方言本身就是要留下来的东西。';
-  }
-
-  function buildTasks(groupId, dialect) {
-    const g = ageGroup(groupId);
-    const d = (dialect || '').trim();
+    const patch = (gl === 'en' || ui === 'en') ? enPatch() : null;
+    const pList = (patch && patch.checklist) || null;
+    const pUi = (patch && patch.ui) || null;
 
     // 先按必录清单分组，方便按方言情况调整顺序
+    // title/hint 给操作者 → ui；任务 label 念给被录者 → guideLang
     const groups = CHECKLIST.map(function (item) {
-      let hint = item.hint;
+      const itemUi = (ui === 'en' && pList && pList[item.id]) ? ov(item, pList[item.id]) : item;
+      const itemGl = (gl === 'en' && pList && pList[item.id]) ? ov(item, pList[item.id]) : item;
+      let hint = itemUi.hint;
       if (item.id === 'dialect' && d) {
-        hint = '他会说' + d + '，这一组是重点，一定要录';
+        hint = tpl(pUi, 'dialectGroupHint', d,
+          '他会说' + d + '，这一组是重点，一定要录');
       }
       return {
-        item: item,
+        item: itemUi,
         hint: hint,
-        tasks: item.tasks.map(function (t, i) {
+        tasks: itemGl.tasks.map(function (t, i) {
           let tip = t.tip || hint;
           if (item.id === 'dialect' && d) {
             // 引导问题显示给「提问的人」看，他会自然用自己的话去问；
             // 但必录清单是他要照着做的，方言被填了就必须点明用什么话讲。
             tip = i === 0
-              ? '就用平时说的' + d + '，不用转成普通话'
-              : '用' + d + '说出来，越地道越好';
+              ? tpl(pUi, 'dialectTipFirst', d, '就用平时说的' + d + '，不用转成普通话')
+              : tpl(pUi, 'dialectTipRest', d, '用' + d + '说出来，越地道越好');
           }
           return { t: t, tip: tip };
         })
@@ -718,11 +778,11 @@ Q：训练到一半停电了 / 不小心关了窗口怎么办？
 
     g.questions.forEach(function (q, i) {
       tasks.push({
-        id: 'guide.' + g.id + '.' + i,
+        id: 'guide.' + base.id + '.' + i,
         group: 'guide',
-        groupTitle: '聊一聊',
+        groupTitle: (ui === 'en' && pUi && pUi.chatGroupTitle) ? pUi.chatGroupTitle : '聊一聊',
         label: q,
-        tip: '让他自由回答，不要念稿'
+        tip: (ui === 'en' && pUi && pUi.guideTaskTip) ? pUi.guideTaskTip : '让他自由回答，不要念稿'
       });
     });
     return tasks;
@@ -739,8 +799,10 @@ Q：训练到一半停电了 / 不小心关了窗口怎么办？
     NEXT_STEPS: NEXT_STEPS,
     ageGroup: ageGroup,
     language: language,
+    purpose: purpose,
     trainCode: trainCode,
     buildTasks: buildTasks,
-    dialectNote: dialectNote
+    dialectNote: dialectNote,
+    nextSteps: nextSteps
   };
 })();
