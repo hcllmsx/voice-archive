@@ -43,8 +43,6 @@
     installDismissed: false,
     envDismissed: false,
     privacyDismissed: false,
-    backupMuted: false,
-    sinceBackup: 0,
     raf: 0,
     lastZip: null,
     showTaskList: false,
@@ -358,8 +356,9 @@
 
     html += '<section class="card">' +
       '<button class="btn ghost block" data-act="go-settings">' + esc(T('btnSettings')) + '</button>' +
-      // 用户选过「以后不再提示」后首页不再显示；仍可通过设置页的「查看添加步骤」查看
-      (!state.installDismissed
+      // 已是 PWA（standalone 独立窗口）或用户选过「以后不再提示」后首页不再显示；
+      // 仍可通过设置页的「查看添加步骤」查看
+      (!state.installDismissed && !state.standalone
         ? '<button class="btn ghost block" data-act="go-install">' + esc(T('btnInstall')) + '</button>'
         : '') +
       '</section>';
@@ -627,7 +626,6 @@
     state.tasks = buildProjectTasks(p);
     state.pending = null;
     state.showTaskList = false;
-    state.sinceBackup = 0;
     stopPlay();
     return DB.getClips(p.id).then(function (clips) {
       state.clips = clips;
@@ -682,34 +680,6 @@
     openModal(html);
   }
 
-  /** 还没有备份的句数 */
-  function unbackedCount() {
-    const backed = state.project ? (state.project.lastBackupCount || 0) : 0;
-    return Math.max(0, state.clips.length - backed);
-  }
-
-  /* 录音页右上角常驻安全标签（与进度文字同行、右对齐）：
-     一句都没录时显示"无数据"；有备份缺口时黄底警告；全部已备份绿底 + 锁标放最后 */
-  function safetySpan() {
-    const unbacked = unbackedCount();
-    let cls = 'ok', text, icon = '';
-    if (!state.clips.length) {
-      cls = 'none';
-      text = T('noData');
-    } else if (unbacked > 0) {
-      cls = 'warn';
-      text = T('unbackedN', { n: unbacked });
-      icon = '⚠️';
-    } else {
-      text = T('backedOk');
-      icon = '🔒';
-    }
-    return '<span class="safety ' + cls + '">' +
-      '<span>' + esc(text) + '</span>' +
-      (icon ? '<span class="safety-ico" aria-hidden="true">' + icon + '</span>' : '') +
-      '</span>';
-  }
-
   function viewRecord() {
     const p = state.project;
     if (!p) return viewHome();
@@ -732,11 +702,9 @@
       '</span>' +
       '</nav>';
 
-    // 常驻安全状态标签：与进度文字同一行，右对齐
     html += '<section class="progress-head">' +
       '<div class="progress-line">' +
       '<span class="muted">' + esc(T('progressN', { cur: state.cursor + 1, total: total, done: done })) + '</span>' +
-      safetySpan() +
       '</div>' +
       '<div class="bar thin"><i style="width:' + (total ? Math.round(done / total * 100) : 0) + '%"></i></div>' +
       '</section>';
@@ -1086,14 +1054,12 @@
 
       URL.revokeObjectURL(pd.url);
       state.pending = null;
-      state.sinceBackup++;
 
       const next = nextIncompleteFrom(state.cursor + 1);
       if (next != null) state.cursor = next;
 
       DB.updateProject(state.project.id, { updatedAt: Date.now() });
       render();
-      maybeRemindBackup();
     }).catch(function (e) {
       toast(T('toastSaveFail', { msg: e.message }));
     });
@@ -1514,12 +1480,9 @@
           return DB.updateProject(p.id, {
             targetPath: built.base,
             exportCount: built.batch,
-            lastExportAt: Date.now(),
-            lastBackupCount: state.clips.length
+            lastExportAt: Date.now()
           }).then(function (upd) {
             if (upd) state.project = upd;
-            state.sinceBackup = 0;
-            state.backupMuted = false;
             render();
             presentZip(blob, built.name);
           });
@@ -1936,27 +1899,6 @@
   }
 
   /* ================================================================== */
-  /* 备份提醒                                                            */
-  /* ================================================================== */
-  function maybeRemindBackup() {
-    if (state.backupMuted) return;
-    // 已安装 PWA 的 10 句一提醒，没安装的 3 句一提醒
-    const threshold = state.standalone ? 10 : 3;
-    const n = unbackedCount();
-    if (n < threshold) return;
-
-    openModal(
-      '<h3 class="modal-title">' + esc(T('remindTitle', { n: n })) + '</h3>' +
-      '<p class="modal-text">' + esc(T('remindBody')) + '</p>' +
-      '<div class="modal-actions col">' +
-      '<button class="btn primary" data-act="backup-now">' + esc(T('btnSaveNow')) + '</button>' +
-      '<button class="btn ghost" data-act="backup-later">' + esc(T('btnLater')) + '</button>' +
-      '<button class="btn ghost" data-act="backup-mute">' + esc(T('btnMuteRemind')) + '</button>' +
-      '</div>'
-    );
-  }
-
-  /* ================================================================== */
   /* 事件                                                               */
   /* ================================================================== */
   function onAction(act, el) {
@@ -2057,10 +1999,6 @@
       case 'share-again':
         if (state.lastZip) presentZip(state.lastZip.blob, state.lastZip.name);
         break;
-
-      case 'backup-now': closeModal(); doExport('full'); break;
-      case 'backup-later': closeModal(); break;
-      case 'backup-mute': state.backupMuted = true; closeModal(); break;
 
       case 'factory-reset': resetToFactory(); break;
       default: break;
@@ -2227,6 +2165,27 @@
       (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
   }
 
+  /**
+   * 监听 display-mode 的实时切换（如从标签页切进已安装的 PWA 独立窗口，或反之），
+   * 让 state.standalone 始终反映「当前是否运行在 PWA 里」，首页按钮随之即时显隐。
+   */
+  function watchStandaloneMode() {
+    if (!window.matchMedia) return;
+    const mql = window.matchMedia('(display-mode: standalone)');
+    const sync = function () {
+      const next = navigator.standalone === true || mql.matches;
+      if (next !== state.standalone) {
+        state.standalone = next;
+        render();
+      }
+    };
+    if (mql.addEventListener) {
+      mql.addEventListener('change', sync);
+    } else if (mql.addListener) { // 旧版 Safari 用 addListener
+      mql.addListener(sync);
+    }
+  }
+
   function initPersistence() {
     if (!navigator.storage || !navigator.storage.persisted) return Promise.resolve(false);
     return navigator.storage.persisted().then(function (p) {
@@ -2249,7 +2208,7 @@
       state.projects.unshift(row);
     }
     ['nickname', 'speakerId', 'ageGroup', 'language', 'dialect', 'purpose', 'recGuideSeen',
-      'createdAt', 'updatedAt', 'exportCount', 'lastBackupCount', 'targetPath', 'customTexts']
+      'createdAt', 'updatedAt', 'exportCount', 'targetPath', 'customTexts']
       .forEach(function (k) {
         if (p[k] !== undefined) row[k] = p[k];
       });
@@ -2292,6 +2251,7 @@
 
   function init() {
     state.standalone = detectStandalone();
+    watchStandaloneMode();
     state.recCountdown = readRecCountdown();
     applyDocLang();
     bindEvents();

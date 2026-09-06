@@ -74,9 +74,6 @@
       labelNote2: '语气词、叹气也照实记：像“嗯”“诶”“哎呀”这类，声音听起来像哪个字，就写哪个字。',
       labelNote3: '不要写「（笑）」「（叹气）」这样的注释——模型只认字和声音，认不了括号里的说明。',
       labelNote4: '如果整段只有笑声、没说成句的话，标成参考音频比放进训练句更好。',
-      unbackedN: '有 {n} 句还没备份',
-      backedOk: '已备份',
-      noData: '无数据',
       notesTitle: '注意',
       suggestedDuration: '建议时长：{d}',
       progressN: '第 {cur} / {total} 句 · 已完成 {done} 句',
@@ -234,13 +231,6 @@
       installOptional: '不添加也能用，只是录音被系统清理的风险更高一些。',
       btnGotIt: '知道了',
       btnNeverAgain: '以后不再提示',
-
-      /* 备份提醒 */
-      remindTitle: '已经录了 {n} 句啦',
-      remindBody: '要不要先发给自己存一份？长时间不打开的话，系统可能会把这些录音清掉。',
-      btnSaveNow: '立即保存',
-      btnLater: '稍后',
-      btnMuteRemind: '本次不再提醒',
 
       /* 微信 */
       btnTryAnyway: '我就试试看',

@@ -86,8 +86,7 @@ window.DB = (function () {
         createdAt: now,
         updatedAt: now,
         exportCount: 0,
-        lastExportAt: 0,
-        lastBackupCount: 0
+        lastExportAt: 0
       };
       return tx('projects', 'readwrite', function (s) {
         s.put(project);

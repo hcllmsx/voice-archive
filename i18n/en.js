@@ -74,9 +74,6 @@
       labelNote2: 'Write particles and sighs as heard — “um”, “er”, “ah”. Whatever the sound most resembles, write that.',
       labelNote3: 'Don’t add notes in brackets like “(laugh)” or “(sigh)” — the model learns letters and sounds, not stage directions.',
       labelNote4: 'If a take is pure laughter with no actual words, it works better as a reference clip than as a training sentence.',
-      unbackedN: '{n} clip(s) not backed up',
-      backedOk: 'Backed up',
-      noData: 'No data yet',
       notesTitle: 'Notes',
       suggestedDuration: 'Suggested duration: {d}',
       progressN: 'Clip {cur} / {total} · {done} done',
@@ -234,13 +231,6 @@
       installOptional: 'It works without adding, but recordings face a higher risk of being cleared by the system.',
       btnGotIt: 'Got it',
       btnNeverAgain: 'Don\'t show again',
-
-      /* 备份提醒 */
-      remindTitle: '{n} clips recorded!',
-      remindBody: 'Save a copy to yourself first? If the app stays closed for a while, the system may clear these recordings.',
-      btnSaveNow: 'Save now',
-      btnLater: 'Later',
-      btnMuteRemind: 'Don\'t remind me again',
 
       /* 微信 */
       btnTryAnyway: 'Let me try anyway',

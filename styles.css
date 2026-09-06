@@ -434,39 +434,6 @@ h1, h2, h3 {
 }
 
 /* ================================================================== */
-/* 安全状态指示条                                                      */
-/* ================================================================== */
-.safety {
-  margin-left: auto;            /* 与进度文字同一行，贴到最右 */
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 12.5px;
-  border-radius: 999px;
-  padding: 3px 12px;
-  white-space: nowrap;
-}
-
-.safety.ok {
-  background: var(--moss-soft);
-  color: var(--moss);
-}
-
-.safety.warn {
-  background: var(--amber-soft);
-  color: #8A6415;
-}
-
-.safety.none {
-  background: var(--surface-2);
-  color: var(--muted);
-}
-
-.safety .safety-ico {
-  font-size: 11px;
-}
-
-/* ================================================================== */
 /* 年龄段注意事项                                                      */
 /* ================================================================== */
 .note {
