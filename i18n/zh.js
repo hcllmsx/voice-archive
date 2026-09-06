@@ -166,7 +166,7 @@
       toastNoAudioExport: '没有可用的音频',
       toastPackFail: '打包失败：{msg}',
       zipName: '声音留档-{name}-批次{n}-{date}.zip',
-      nextStepsFile: '接下来怎么做.txt',
+      nextStepsFile: '接下来怎么做.html',
       packedTitle: '打包好了',
       packedTip: '推荐分享到微信「文件传输助手」，在电脑上直接就能拿到。',
       btnShare: '分享到微信 / 备忘录',

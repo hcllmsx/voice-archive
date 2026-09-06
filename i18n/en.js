@@ -166,7 +166,7 @@
       toastNoAudioExport: 'No usable audio',
       toastPackFail: 'Packing failed: {msg}',
       zipName: 'VoiceArchive-{name}-batch{n}-{date}.zip',
-      nextStepsFile: 'NEXT-STEPS.txt',
+      nextStepsFile: 'NEXT-STEPS.html',
       packedTitle: 'All packed',
       packedTip: 'Tip: share it to WeChat “File Transfer” and grab it on your computer directly.',
       btnShare: 'Share (WeChat / Notes)',

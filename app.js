@@ -1403,7 +1403,7 @@
     toast(T('toastPacking'));
     // 让浏览器先把 toast 画出来，再做重活
     setTimeout(function () {
-      // 完整训练包要带「接下来怎么做.txt」：先确保文档已就绪（离线时走 SW 缓存）
+      // 完整训练包要带「接下来怎么做.html」：先确保文档已就绪（离线时走 SW 缓存）
       const ready = (mode === 'full' && I18N.ensureNextSteps)
         ? I18N.ensureNextSteps(I18N.getUiLang())
         : Promise.resolve(true);
@@ -2119,7 +2119,7 @@
     // 第 1 层：申请持久化存储（静默，不打扰）
     initPersistence().then(function (ok) { state.persisted = !!ok; });
 
-    // 预载「接下来怎么做.txt」（zh / en），导出打包时直接可用；
+    // 预载「接下来怎么做.html」（zh / en），导出打包时直接可用；
     // 失败也没关系，导出前 ensureNextSteps 还会再兜底一次
     if (I18N.preloadNextSteps) I18N.preloadNextSteps().catch(function () {});
 

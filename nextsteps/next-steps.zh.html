@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>声音留档 · 接下来怎么做</title>
+<style>
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: #f3f5f9;
+    color: #23262f;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+      "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.75;
+  }
+  .wrap { max-width: 780px; margin: 0 auto; padding: 28px 16px 80px; }
+
+  /* ---------- 头部 ---------- */
+  .hero {
+    background: linear-gradient(150deg, #25543d 0%, #2f7d5d 70%, #3c9270 100%);
+    color: #fff;
+    border-radius: 18px;
+    padding: 30px 26px 26px;
+    margin-bottom: 22px;
+  }
+  .hero-top {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 12px; margin-bottom: 8px;
+  }
+  .hero .eyebrow {
+    font-size: 13px; letter-spacing: 2px; opacity: .75; margin: 0;
+    text-transform: uppercase;
+  }
+  .hero h1 { margin: 0 0 10px; font-size: 27px; line-height: 1.3; }
+  .hero p { margin: 0; font-size: 15px; opacity: .94; }
+  .hero .meta {
+    margin-top: 18px; display: inline-flex; flex-wrap: wrap; gap: 8px; align-items: center;
+  }
+  .hero .pill {
+    background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.28);
+    padding: 4px 12px; border-radius: 999px; font-size: 13.5px; white-space: nowrap;
+  }
+  .hero .pill b { font-weight: 600; }
+  .hero .meta small { font-size: 12.5px; opacity: .8; width: 100%; }
+  .hero .brand-links { display: flex; gap: 10px; flex-shrink: 0; }
+  .hero .brand-links a {
+    display: flex; align-items: center; justify-content: center;
+    transition: transform .18s ease, opacity .18s ease;
+  }
+  .hero .brand-links a:hover { opacity: .85; transform: translateY(-1px); }
+  .hero .brand-links a:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+  .hero .brand-links svg { width: 22px; height: 22px; display: block; }
+
+  /* ---------- 目录 ---------- */
+  .toc {
+    background: #fff; border: 1px solid #e6e8f0; border-radius: 14px;
+    padding: 14px 16px; margin-bottom: 22px;
+  }
+  .toc .t { font-size: 13px; color: #6b7280; letter-spacing: 1px; margin: 0 0 8px; }
+  .toc ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+  .toc a {
+    text-decoration: none; font-size: 13.5px; color: #2f7d5d;
+    border: 1px solid #cfe5d8; background: #f2f9f5;
+    padding: 3px 11px; border-radius: 999px; white-space: nowrap;
+  }
+  .toc a:hover { background: #e3f2e9; }
+
+  /* ---------- 卡片区块 ---------- */
+  .card {
+    background: #fff; border: 1px solid #e6e8f0; border-radius: 16px;
+    padding: 22px 22px 20px; margin-bottom: 18px;
+  }
+  .card > h2 {
+    display: flex; align-items: center; gap: 11px; flex-wrap: wrap;
+    margin: 0 0 14px; font-size: 19.5px; line-height: 1.35;
+  }
+  .card h2 .no {
+    flex: none; width: 34px; height: 34px; border-radius: 50%;
+    background: #2f7d5d; color: #fff; font-size: 16px; font-weight: 600;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .card h2 .eta { font-size: 12.5px; font-weight: 400; color: #8a90a0;
+    border: 1px solid #e6e8f0; border-radius: 999px; padding: 1px 10px; }
+  .card > p { margin: 0 0 12px; }
+  .card ul, .card ol { margin: 4px 0 12px; padding-left: 22px; }
+  .card li { margin: 5px 0; }
+  .subhead { font-size: 15px; font-weight: 600; margin: 18px 0 6px; color: #374151; }
+  .subhead:first-child { margin-top: 4px; }
+
+  /* 必需 / 说明标签 */
+  .req, .note { margin: 0 0 10px; padding: 10px 14px; border-radius: 12px; font-size: 14.5px; }
+  .req { background: #fff7ed; border: 1px solid #ffe0b8; }
+  .req::before { content: "必需"; display: inline-block; font-size: 12px; font-weight: 600;
+    color: #fff; background: #d97706; border-radius: 6px; padding: 0 8px; margin-right: 8px; }
+  .note { background: #f2f7fb; border: 1px solid #d7e7f4; }
+  .note::before { content: "说明"; display: inline-block; font-size: 12px; font-weight: 600;
+    color: #fff; background: #4a86b8; border-radius: 6px; padding: 0 8px; margin-right: 8px; }
+  .req b, .note b { color: #23262f; }
+
+  /* 提示 / 警告 / 成功 */
+  .warn, .tip, .ok {
+    border-radius: 12px; padding: 12px 15px; margin: 12px 0; font-size: 14.5px;
+  }
+  .warn { background: #fdeeee; border: 1px solid #f3c9c9; color: #933a2a; }
+  .warn b { color: #7c1f12; }
+  .warn.strong { background: #fbe3e1; border: 1.5px solid #e89a93; }
+  .tip { background: #f2f9f5; border: 1px solid #cfe5d8; color: #2a5f46; }
+  .ok { background: #eefaf0; border: 1px solid #bfe6c7; color: #1e5a2e; }
+  .warn::before, .tip::before { font-weight: 700; margin-right: 6px; }
+  .warn::before { content: "⚠"; }
+  .tip::before { content: "💡"; }
+
+  /* 路径 / 代码 */
+  code, .path {
+    font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 13px;
+  }
+  .path {
+    display: inline-block; background: #eef0f6; border: 1px solid #dfe2ec;
+    border-radius: 7px; padding: 0 7px; white-space: nowrap; color: #323a4d;
+  }
+  .path.good { background: #e7f3ec; border-color: #bfe0cd; color: #1d5c40; }
+  .path.bad { background: #fdeee4; border-color: #f1cdb6; color: #94421a; }
+
+  /* 文件结构树 */
+  pre.tree {
+    font-family: ui-monospace, SFMono-Regular, Consolas, Menlo, monospace;
+    font-size: 13px; line-height: 1.9;
+    background: #fafbfd; border: 1px solid #e6e8f0; border-radius: 12px;
+    padding: 12px 16px; margin: 10px 0 4px; overflow-x: auto; color: #333b4d;
+  }
+  pre.tree .cm { color: #98a0b3; }
+  pre.tree .hl { color: #2f7d5d; font-weight: 600; }
+  pre.tree .hlb { background: #e7f3ec; border-radius: 4px; padding: 0 3px; }
+
+  /* 小步骤中的序号标记 */
+  .step-list > li { position: relative; padding-left: 30px; }
+  .step-list > li::marker { content: none; }
+  .step-list > li .idx {
+    position: absolute; left: 0; top: 3px; width: 20px; height: 20px; line-height: 20px;
+    text-align: center; background: #e7f3ec; color: #1d5c40; font-weight: 600;
+    font-size: 12.5px; border-radius: 6px;
+  }
+
+  .divider {
+    border: none; border-top: 1px dashed #d8dbe6; margin: 18px 0;
+  }
+  .divider-label {
+    display: flex; align-items: center; gap: 12px; margin: 22px 0 4px;
+    font-size: 14px; font-weight: 600; color: #6b7280;
+  }
+  .divider-label::after { content: ""; flex: 1; border-top: 1px dashed #d8dbe6; }
+
+  /* FAQ */
+  .faq { border-bottom: 1px solid #eef0f6; padding: 12px 0; }
+  .faq:last-child { border-bottom: none; }
+  .faq .q { font-size: 15.5px; font-weight: 600; margin: 0 0 6px; color: #1f2430; }
+  .faq .q::before { content: "Q "; color: #2f7d5d; }
+  .faq .a { font-size: 14.5px; color: #4b5563; }
+  .faq ol, .faq ul { margin: 4px 0 4px; padding-left: 22px; }
+  .faq li { margin: 3px 0; }
+
+  .center { text-align: center; }
+  .card.quiet { background: transparent; border-style: dashed; text-align: center; }
+  .foot { margin-top: 30px; text-align: center; color: #9aa1b2; font-size: 12.5px; }
+
+  a.ext { color: #2f7d5d; }
+  @media print {
+    body { background: #fff; }
+    .card, .hero { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- 头部 -->
+  <div class="hero">
+    <div class="hero-top">
+      <p class="eyebrow">Voice Archive · 声音留档</p>
+      <div class="brand-links">
+        <a href="https://github.com/hcllmsx/voice-archive" target="_blank" rel="noopener" title="项目源码 github.com/hcllmsx/voice-archive" aria-label="项目源码 github.com/hcllmsx/voice-archive">
+          <svg viewBox="0 0 16 16" role="img"><path fill="#fff" fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+        </a>
+        <a href="https://syld.oooq.cc/" target="_blank" rel="noopener" title="官网 syld.oooq.cc" aria-label="官网 syld.oooq.cc">
+          <svg viewBox="0 0 512 512" role="img"><rect width="512" height="512" rx="112" fill="#C06A45"/><g fill="none" stroke="#FDFBF7" stroke-width="18" stroke-linecap="round"><path d="M336 236 A80 80 0 0 1 176 236"/></g><rect x="208" y="124" width="96" height="136" rx="48" fill="#FDFBF7"/><rect x="247" y="306" width="18" height="62" fill="#FDFBF7"/><rect x="206" y="366" width="100" height="22" rx="11" fill="#FDFBF7"/></svg>
+        </a>
+      </div>
+    </div>
+    <h1>接下来怎么做</h1>
+    <p>你已经完成了最重要、也最不可替代的一步：<b>录下了 TA 的声音</b>。<br>
+    接下来只要把这份录音变成一个能说话的模型——全程不用写任何代码，照着点就行。</p>
+    <div class="meta">
+      <span class="pill">预计耗时 <b>40 分钟 ~ 2 小时</b></span>
+      <small>其中大部分时间电脑在自动跑，你可以去做别的事</small>
+    </div>
+  </div>
+
+  <!-- 目录 -->
+  <div class="toc">
+    <p class="t">快速跳转</p>
+    <ul>
+      <li><a href="#prep">开始前检查</a></li>
+      <li><a href="#step0">第 0 步 · 传录音</a></li>
+      <li><a href="#step1">第 1 步 · 下载软件</a></li>
+      <li><a href="#step2">第 2 步 · 打开软件</a></li>
+      <li><a href="#step3">第 3 步 · 格式化</a></li>
+      <li><a href="#step4">第 4 步 · 训练</a></li>
+      <li><a href="#step5">第 5 步 · 试听</a></li>
+      <li><a href="#faq">常见问题</a></li>
+      <li><a href="#backup">备份模型</a></li>
+    </ul>
+  </div>
+
+  <!-- 开始前检查 -->
+  <div class="card" id="prep">
+    <h2><span class="no">✓</span>开始前：看看你的电脑行不行</h2>
+    <div class="req"><b>一台 Windows 电脑，显卡是 NVIDIA 的，显存 8GB 以上。</b><br>
+      怎么看显卡：按 <code>Ctrl + Shift + Esc</code> 打开任务管理器 → 点「性能」→ 左边找「GPU」→ 右上角会显示显卡型号和显存大小。看到 N 卡（GTX / RTX 开头）就没问题，显存那一行要大于 8GB。</div>
+    <div class="req"><b>硬盘留出 30GB 以上的空间。</b></div>
+    <div class="note"><b>苹果 Mac 也能跑</b>，但训练出来的质量会明显差一些。如果可以，借一台 Windows 笔记本会更好。</div>
+    <div class="note"><b>没有独立显卡（只有核显）跑不动训练。</b>可以找有显卡的朋友帮忙，或者租用云端显卡。</div>
+  </div>
+
+  <!-- 第 0 步 -->
+  <div class="card" id="step0">
+    <h2><span class="no">0</span>把录音传到电脑上<span class="eta">2 分钟</span></h2>
+    <ol class="step-list">
+      <li><span class="idx">1</span>你在手机上导出的是一个 <b>ZIP 文件</b>。</li>
+      <li><span class="idx">2</span>如果你当时分享到了微信「文件传输助手」：电脑上打开微信 → 找到「文件传输助手」→ 下载那个 ZIP。</li>
+      <li><span class="idx">3</span>下载好后，把它解压到一个文件夹里。</li>
+    </ol>
+    <div class="warn"><b>重要：解压出来的文件夹路径，不要包含中文和空格！</b><br>
+      推荐做法：直接在 D 盘根目录建一个英文文件夹，例如 <span class="path good">D:\voice</span></div>
+    <p style="margin:6px 0 2px">解压后应该是这样的结构：</p>
+<pre class="tree">D:\voice\
+├─ wavs\            <span class="cm">一堆 wav 音频文件</span>
+├─ dataset.list     <span class="cm">标注文件</span>
+├─ references\      <span class="cm">参考音频</span>
+└─ <span class="hl">接下来怎么做.html</span>   <span class="hlb">就是你现在看的这个</span></pre>
+    <p style="margin-top:10px">不推荐这样（有中文和空格，可能报错）：<br>
+    <span class="path bad">D:\我的文件\声音 留档\张三 的录音\</span></p>
+  </div>
+
+  <!-- 第 1 步 -->
+  <div class="card" id="step1">
+    <h2><span class="no">1</span>下载软件<span class="eta">约 20 分钟 · 看网速</span></h2>
+    <p>这个软件叫 <b>GPT-SoVITS</b>，是开源的、免费的。作者是 B 站 UP 主「花儿不哭」。</p>
+    <p>下载地址（GitHub 官方仓库的发布页）：</p>
+    <p><a class="path good" href="https://github.com/RVC-Boss/GPT-SoVITS/releases">https://github.com/RVC-Boss/GPT-SoVITS/releases</a></p>
+    <div class="subhead">怎么挑版本</div>
+    <ul>
+      <li>找名字里带「整合包」的，找最新日期的，例如 <span class="path">GPT-SoVITS-v2pro-20250604.7z</span></li>
+      <li>录音质量很好、很干净 → 用 <b>v3 或 v4</b></li>
+      <li>录音有点杂音、不太确定 → 用 <b>v2pro</b>（更稳，不容易翻车）</li>
+      <li>拿不准 → 选 <b>v2pro</b>，它是目前最省心的</li>
+    </ul>
+    <p>如果 GitHub 打不开或者下载太慢，去 B 站搜「花儿不哭」，他的主页有网盘分流和详细视频教程。</p>
+    <div class="warn">下载下来的是一个压缩包，要<u>先解压</u>再用。同样，解压路径不要有中文和空格，例如放在 <span class="path good">D:\GPT-SoVITS</span></div>
+  </div>
+
+  <!-- 第 2 步 -->
+  <div class="card" id="step2">
+    <h2><span class="no">2</span>打开软件<span class="eta">约 3 分钟</span></h2>
+    <p>进入解压后的文件夹，找到这个文件，双击它：</p>
+    <p><span class="path good">go-webui.bat</span></p>
+    <p>接下来会弹出一个黑色命令行窗口，开始加载。第一次启动会比较慢，可能要几分钟，这是正常的。</p>
+    <div class="warn"><b>这个黑窗口全程不要关！</b>关了软件就停了。</div>
+    <p>加载完成后，会自动弹出浏览器页面。如果没有自动弹出，手动打开浏览器，地址栏输入：<br>
+    <span class="path good">http://localhost:9874</span></p>
+    <div class="ok">看到界面了，就成功了。</div>
+  </div>
+
+  <!-- 第 3 步 -->
+  <div class="card" id="step3">
+    <h2><span class="no">3</span>格式化训练集<span class="eta">约 5 分钟</span></h2>
+    <p>这一步是让电脑「听懂」你的录音，为训练做准备。你只要填路径和点按钮。</p>
+    <ol class="step-list">
+      <li><span class="idx">1</span>在顶部切换到「<b>1-GPT-SoVITS-TTS</b>」标签页</li>
+      <li><span class="idx">2</span>找到「<b>1A-训练集格式化工具</b>」</li>
+      <li><span class="idx">3</span>填写实验/模型名——用英文或数字，不要用中文，例如 <span class="path">zhangsan</span></li>
+      <li><span class="idx">4</span>填写「文本标注文件」路径，就是你解压出来的那个 <span class="path good">D:\voice\dataset.list</span></li>
+      <li><span class="idx">5</span>填写「训练集音频文件夹路径」，就是你解压出来的 wavs 文件夹 <span class="path good">D:\voice\wavs</span></li>
+      <li><span class="idx">6</span>勾上「<b>开启训练集格式化一键三连</b>」</li>
+      <li><span class="idx">7</span>点「<b>一键三连</b>」，然后等着。底部会有进度提示</li>
+    </ol>
+    <div class="ok">看到类似「格式化完毕」的提示，就可以了。</div>
+    <div class="warn">如果这一步报错，99% 是因为：路径里有中文或空格。<br>回到第 0 步，换个纯英文路径。</div>
+  </div>
+
+  <!-- 第 4 步 -->
+  <div class="card" id="step4">
+    <h2><span class="no">4</span>训练模型<span class="eta">约 20 分钟 ~ 1 小时</span></h2>
+    <p>切到「<b>1B-微调训练</b>」标签页。这里要训练两个模型，<b>有先后顺序，别搞反</b>：</p>
+
+    <div class="divider-label">先训练 SoVITS</div>
+    <ol class="step-list">
+      <li><span class="idx">1</span>点「开始 SoVITS 训练」</li>
+      <li><span class="idx">2</span>训练轮数保持默认（通常是 8 轮）</li>
+      <li><span class="idx">3</span>等着，看到提示训练完成</li>
+    </ol>
+
+    <div class="divider-label">再训练 GPT</div>
+    <ol class="step-list">
+      <li><span class="idx">4</span>点「开始 GPT 训练」</li>
+      <li><span class="idx">5</span>训练轮数保持默认（通常是 15 轮）</li>
+      <li><span class="idx">6</span>等着，看到提示训练完成</li>
+    </ol>
+
+    <div class="warn strong"><b>最重要的警告：</b>不要觉得「训练轮数越多越好」就改成 50 轮、100 轮！<br><br>
+      轮数太高会「过拟合」——模型把录音死记硬背下来，结果是换一句新话就不会说了，而且会出现电音、破音、金属声。<br><br>
+      <b>默认参数就是最好的，别动它。</b></div>
+
+    <div class="tip">如果中途报错「显存不足」：把 batch_size 调小（比如从 8 改成 4，再不行改成 2），然后重新点训练。速度会慢一些，但能跑完。</div>
+  </div>
+
+  <!-- 第 5 步 -->
+  <div class="card" id="step5">
+    <h2><span class="no">5</span>试听——让他开口说话<span class="eta">约 2 分钟</span></h2>
+    <p>切到「<b>1C-推理</b>」标签页。</p>
+    <ol class="step-list">
+      <li><span class="idx">1</span>点「刷新模型路径」；在 <b>GPT 模型</b>下拉框里选你刚训练好的那个（名字带 <span class="path">zhangsan</span>），<b>SoVITS 模型</b>下拉框里同样选你训练好的那个</li>
+      <li><span class="idx">2</span>上传参考音频：点上传，选 references 文件夹里的任意一个 wav（就是你在手机上标记的「参考音频候选」）</li>
+      <li><span class="idx">3</span>填写「参考音频的文本」：把这段参考音频说的内容，<b>一字不差</b>地打进去。这一步很重要，能明显提升像不像的程度</li>
+      <li><span class="idx">4</span>选择「参考音频的语种」，中文就选「中文」</li>
+      <li><span class="idx">5</span>在「需要合成的文本」框里，输入你想让他说的话，例如：<span class="path">今天天气不错，要不要出去走走？</span></li>
+      <li><span class="idx">6</span>点「合成语音」，等几秒，就能听到了</li>
+    </ol>
+    <div class="tip"><b>想换情绪？</b>换一段参考音频就行，不用重新训练。想让他高兴，就用高兴时录的那段做参考；想让他温柔，就用温柔时录的那段。<br><br>
+    记住一句话：<b>参考音频是什么情绪，说出来的就是什么情绪。</b></div>
+  </div>
+
+  <!-- FAQ -->
+  <div class="card" id="faq">
+    <h2><span class="no">?</span>常见问题</h2>
+
+    <div class="faq">
+      <p class="q">声音听起来不太像他？</p>
+      <div class="a">先别急着重训，按顺序排查：
+        <ol>
+          <li>参考音频换一个试试（这是最立竿见影的）</li>
+          <li>参考音频的文本是否一字不差填对了？</li>
+          <li>录音总时长够吗？1 分钟只是最低要求，5 分钟以上会好很多</li>
+          <li>录音里有杂音吗？有杂音会直接拖垮效果</li>
+          <li>换 v2pro 版本试试，它对素材质量更宽容</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="faq">
+      <p class="q">声音有电音、金属音、破音？</p>
+      <div class="a">训练轮数太高了，模型过拟合。回到第 4 步，用更少的轮数重新训练（SoVITS 用 4-8 轮）。或者换 v2pro 版本。</div>
+    </div>
+
+    <div class="faq">
+      <p class="q">一句话说到一半卡住了 / 开始重复念同一句？</p>
+      <div class="a">输入太长了。把长文本切成短句，一句一句合成。在「怎么切」那里选「按标点切分」。</div>
+    </div>
+
+    <div class="faq">
+      <p class="q">软件打不开 / 一直报错？</p>
+      <div class="a">
+        <ol>
+          <li>检查路径有没有中文和空格（这个能解决大部分问题）</li>
+          <li>检查是不是没解压就直接运行了</li>
+          <li>检查显卡驱动是不是太旧，更新一下 NVIDIA 驱动</li>
+          <li>去官方教程页面看故障排查章节</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="faq">
+      <p class="q">训练到一半停电了 / 不小心关了窗口怎么办？</p>
+      <div class="a">没关系，重新来一遍就行。已经录好的音频不会丢（它们在 <span class="path">D:\voice</span> 里），只是要重新跑一遍第 3、4 步。</div>
+    </div>
+  </div>
+
+  <!-- 备份 -->
+  <div class="card" id="backup">
+    <h2><span class="no">★</span>重要：训练好的模型要备份</h2>
+    <p>训练完成后，模型文件保存在整合包文件夹里这两个位置：</p>
+<pre class="tree">GPT-SoVITS-v2pro-xxx\
+├─ GPT_weights\
+├─ SoVITS_weights\</pre>
+    <p>找到名字里带你起的模型名（比如 <span class="path">zhangsan</span>）的那<b>两个</b>文件，复制到网盘或者移动硬盘里存好。</p>
+    <p><b>这两个文件就是「他的声音」</b>——几个 G 的录音，最后就浓缩成这两个文件。</p>
+    <div class="warn">如果重装系统或者误删了整合包文件夹，模型就没了，要从头再训一遍。<b>所以务必备份。</b></div>
+  </div>
+
+  <!-- 结尾 -->
+  <div class="card center">
+    <h2 style="justify-content:center">最后</h2>
+    <p>技术部分到这里就结束了。但有几句话想说在最后：</p>
+    <p style="font-size:15.5px;line-height:2">这份录音，是那个人真实存在过的证据。<br>
+    他叫你名字的方式、他笑起来的样子、他说话时的口头禅——<b>这些都留下来了。</b></p>
+    <p>请谨慎保管这些文件。声音是生物特征信息，和指纹、人脸是同一类东西。</p>
+    <p>如果你打算让家人也用这个模型，建议提前和大家说清楚它的存在，以及谁能使用它。</p>
+    <div class="divider"></div>
+    <p style="font-size:32px;font-weight:700;line-height:1.4;color:#2f7d5d;margin:0">祝你顺利</p>
+  </div>
+
+  <p class="foot">声音留档 · Voice Archive</p>
+</div>
+</body>
+</html>

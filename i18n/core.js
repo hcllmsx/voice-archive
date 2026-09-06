@@ -10,7 +10,7 @@
  * 语言数据不在本文件：见 i18n/zh.js、i18n/en.js（每语言一个文件，注册到 window.I18N_LANGS）。
  * 取词统一走 I18N.T(key, vars)，{name} 占位；缺 key 回退中文，再缺回退 key 本身。
  *
- * 「接下来怎么做.txt」是独立静态文档（nextsteps/next-steps.zh.txt / .en.txt），
+ * 「接下来怎么做.html」是独立静态文档（nextsteps/next-steps.zh.html / .en.html），
  * 导出打包前用 fetch 拉进内存，见 preloadNextSteps / ensureNextSteps。
  */
 window.I18N = (function () {
@@ -79,12 +79,12 @@ window.I18N = (function () {
   }
 
   /* ------------------------------------------------------------------ */
-  /* 「接下来怎么做.txt」独立静态文档                                    */
+  /* 「接下来怎么做.html」独立静态文档                                  */
   /* 页面启动时 preload；导出打包前 ensure，保证内容已就绪               */
   /* ------------------------------------------------------------------ */
   const NEXT_STEPS_FILES = {
-    zh: 'nextsteps/next-steps.zh.txt',
-    en: 'nextsteps/next-steps.en.txt'
+    zh: 'nextsteps/next-steps.zh.html',
+    en: 'nextsteps/next-steps.en.html'
   };
   const nextCache = {};
 

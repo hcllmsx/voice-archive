@@ -7,7 +7,7 @@
  *
  * 文案不在本文件：每种语言的完整文案在 i18n/zh.js、i18n/en.js 的 guide 段，
  * 运行时按（项目语言 / 界面语言）从 I18N.guide(lang) 读取；
- * 「接下来怎么做.txt」是独立文档 nextsteps/*.txt，导出时由 I18N 提供。
+ * 「接下来怎么做.html」是独立文档 nextsteps/*.html，导出时由 I18N 提供。
  */
 window.Content = (function () {
   'use strict';
@@ -269,7 +269,7 @@ window.Content = (function () {
   }
 
   /* ------------------------------------------------------------------ */
-  /* 导出包里「接下来怎么做.txt」：独立静态文档，由 i18n 提供             */
+  /* 导出包里「接下来怎么做.html」：独立静态文档，由 i18n 提供           */
   /* ------------------------------------------------------------------ */
   function nextSteps(lang) {
     if (window.I18N && window.I18N.nextStepsText) return window.I18N.nextStepsText(lang);

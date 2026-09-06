@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Voice Archive · What to do next</title>
+<style>
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: #f3f5f9;
+    color: #23262f;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+      "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.75;
+  }
+  .wrap { max-width: 780px; margin: 0 auto; padding: 28px 16px 80px; }
+
+  /* ---------- hero ---------- */
+  .hero {
+    background: linear-gradient(150deg, #25543d 0%, #2f7d5d 70%, #3c9270 100%);
+    color: #fff;
+    border-radius: 18px;
+    padding: 30px 26px 26px;
+    margin-bottom: 22px;
+  }
+  .hero-top {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 12px; margin-bottom: 8px;
+  }
+  .hero .eyebrow {
+    font-size: 13px; letter-spacing: 2px; opacity: .75; margin: 0;
+    text-transform: uppercase;
+  }
+  .hero h1 { margin: 0 0 10px; font-size: 27px; line-height: 1.3; }
+  .hero p { margin: 0; font-size: 15px; opacity: .94; }
+  .hero .meta {
+    margin-top: 18px; display: inline-flex; flex-wrap: wrap; gap: 8px; align-items: center;
+  }
+  .hero .pill {
+    background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.28);
+    padding: 4px 12px; border-radius: 999px; font-size: 13.5px; white-space: nowrap;
+  }
+  .hero .pill b { font-weight: 600; }
+  .hero .meta small { font-size: 12.5px; opacity: .8; width: 100%; }
+  .hero .brand-links { display: flex; gap: 10px; flex-shrink: 0; }
+  .hero .brand-links a {
+    display: flex; align-items: center; justify-content: center;
+    transition: transform .18s ease, opacity .18s ease;
+  }
+  .hero .brand-links a:hover { opacity: .85; transform: translateY(-1px); }
+  .hero .brand-links a:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+  .hero .brand-links svg { width: 22px; height: 22px; display: block; }
+
+  /* ---------- toc ---------- */
+  .toc {
+    background: #fff; border: 1px solid #e6e8f0; border-radius: 14px;
+    padding: 14px 16px; margin-bottom: 22px;
+  }
+  .toc .t { font-size: 13px; color: #6b7280; letter-spacing: 1px; margin: 0 0 8px; }
+  .toc ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+  .toc a {
+    text-decoration: none; font-size: 13.5px; color: #2f7d5d;
+    border: 1px solid #cfe5d8; background: #f2f9f5;
+    padding: 3px 11px; border-radius: 999px; white-space: nowrap;
+  }
+  .toc a:hover { background: #e3f2e9; }
+
+  /* ---------- cards ---------- */
+  .card {
+    background: #fff; border: 1px solid #e6e8f0; border-radius: 16px;
+    padding: 22px 22px 20px; margin-bottom: 18px;
+  }
+  .card > h2 {
+    display: flex; align-items: center; gap: 11px; flex-wrap: wrap;
+    margin: 0 0 14px; font-size: 19.5px; line-height: 1.35;
+  }
+  .card h2 .no {
+    flex: none; width: 34px; height: 34px; border-radius: 50%;
+    background: #2f7d5d; color: #fff; font-size: 16px; font-weight: 600;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .card h2 .eta { font-size: 12.5px; font-weight: 400; color: #8a90a0;
+    border: 1px solid #e6e8f0; border-radius: 999px; padding: 1px 10px; }
+  .card > p { margin: 0 0 12px; }
+  .card ul, .card ol { margin: 4px 0 12px; padding-left: 22px; }
+  .card li { margin: 5px 0; }
+  .subhead { font-size: 15px; font-weight: 600; margin: 18px 0 6px; color: #374151; }
+  .subhead:first-child { margin-top: 4px; }
+
+  .req, .note { margin: 0 0 10px; padding: 10px 14px; border-radius: 12px; font-size: 14.5px; }
+  .req { background: #fff7ed; border: 1px solid #ffe0b8; }
+  .req::before { content: "REQUIRED"; display: inline-block; font-size: 11.5px; font-weight: 600;
+    color: #fff; background: #d97706; border-radius: 6px; padding: 0 8px; margin-right: 8px;
+    vertical-align: 1px; }
+  .note { background: #f2f7fb; border: 1px solid #d7e7f4; }
+  .note::before { content: "NOTE"; display: inline-block; font-size: 11.5px; font-weight: 600;
+    color: #fff; background: #4a86b8; border-radius: 6px; padding: 0 8px; margin-right: 8px;
+    vertical-align: 1px; }
+  .req b, .note b { color: #23262f; }
+
+  .warn, .tip, .ok {
+    border-radius: 12px; padding: 12px 15px; margin: 12px 0; font-size: 14.5px;
+  }
+  .warn { background: #fdeeee; border: 1px solid #f3c9c9; color: #933a2a; }
+  .warn b { color: #7c1f12; }
+  .warn.strong { background: #fbe3e1; border: 1.5px solid #e89a93; }
+  .tip { background: #f2f9f5; border: 1px solid #cfe5d8; color: #2a5f46; }
+  .ok { background: #eefaf0; border: 1px solid #bfe6c7; color: #1e5a2e; }
+  .warn::before, .tip::before { font-weight: 700; margin-right: 6px; }
+  .warn::before { content: "⚠"; }
+  .tip::before { content: "💡"; }
+
+  code, .path {
+    font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 13px;
+  }
+  .path {
+    display: inline-block; background: #eef0f6; border: 1px solid #dfe2ec;
+    border-radius: 7px; padding: 0 7px; white-space: nowrap; color: #323a4d;
+  }
+  .path.good { background: #e7f3ec; border-color: #bfe0cd; color: #1d5c40; }
+  .path.bad { background: #fdeee4; border-color: #f1cdb6; color: #94421a; }
+
+  pre.tree {
+    font-family: ui-monospace, SFMono-Regular, Consolas, Menlo, monospace;
+    font-size: 13px; line-height: 1.9;
+    background: #fafbfd; border: 1px solid #e6e8f0; border-radius: 12px;
+    padding: 12px 16px; margin: 10px 0 4px; overflow-x: auto; color: #333b4d;
+  }
+  pre.tree .cm { color: #98a0b3; }
+  pre.tree .hl { color: #2f7d5d; font-weight: 600; }
+  pre.tree .hlb { background: #e7f3ec; border-radius: 4px; padding: 0 3px; }
+
+  .step-list > li { position: relative; padding-left: 30px; }
+  .step-list > li::marker { content: none; }
+  .step-list > li .idx {
+    position: absolute; left: 0; top: 3px; width: 20px; height: 20px; line-height: 20px;
+    text-align: center; background: #e7f3ec; color: #1d5c40; font-weight: 600;
+    font-size: 12.5px; border-radius: 6px;
+  }
+
+  .divider { border: none; border-top: 1px dashed #d8dbe6; margin: 18px 0; }
+  .divider-label {
+    display: flex; align-items: center; gap: 12px; margin: 22px 0 4px;
+    font-size: 14px; font-weight: 600; color: #6b7280;
+  }
+  .divider-label::after { content: ""; flex: 1; border-top: 1px dashed #d8dbe6; }
+
+  .faq { border-bottom: 1px solid #eef0f6; padding: 12px 0; }
+  .faq:last-child { border-bottom: none; }
+  .faq .q { font-size: 15.5px; font-weight: 600; margin: 0 0 6px; color: #1f2430; }
+  .faq .q::before { content: "Q "; color: #2f7d5d; }
+  .faq .a { font-size: 14.5px; color: #4b5563; }
+  .faq ol, .faq ul { margin: 4px 0 4px; padding-left: 22px; }
+  .faq li { margin: 3px 0; }
+
+  .center { text-align: center; }
+  .foot { margin-top: 30px; text-align: center; color: #9aa1b2; font-size: 12.5px; }
+
+  a.ext { color: #2f7d5d; }
+  @media print {
+    body { background: #fff; }
+    .card, .hero { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- hero -->
+  <div class="hero">
+    <div class="hero-top">
+      <p class="eyebrow">Voice Archive · 声音留档</p>
+      <div class="brand-links">
+        <a href="https://github.com/hcllmsx/voice-archive" target="_blank" rel="noopener" title="Source code github.com/hcllmsx/voice-archive" aria-label="Source code github.com/hcllmsx/voice-archive">
+          <svg viewBox="0 0 16 16" role="img"><path fill="#fff" fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+        </a>
+        <a href="https://syld.oooq.cc/" target="_blank" rel="noopener" title="Website syld.oooq.cc" aria-label="Website syld.oooq.cc">
+          <svg viewBox="0 0 512 512" role="img"><rect width="512" height="512" rx="112" fill="#C06A45"/><g fill="none" stroke="#FDFBF7" stroke-width="18" stroke-linecap="round"><path d="M336 236 A80 80 0 0 1 176 236"/></g><rect x="208" y="124" width="96" height="136" rx="48" fill="#FDFBF7"/><rect x="247" y="306" width="18" height="62" fill="#FDFBF7"/><rect x="206" y="366" width="100" height="22" rx="11" fill="#FDFBF7"/></svg>
+        </a>
+      </div>
+    </div>
+    <h1>What to do next</h1>
+    <p>You've just finished the most important, irreplaceable step: <b>you recorded their voice</b>.<br>
+    All that's left is turning these recordings into a model that can speak — no coding needed, just follow along.</p>
+    <div class="meta">
+      <span class="pill">Estimated time <b>40 min ~ 2 hours</b></span>
+      <small>Most of it is the computer running on its own — go do something else meanwhile</small>
+    </div>
+  </div>
+
+  <!-- toc -->
+  <div class="toc">
+    <p class="t">JUMP TO</p>
+    <ul>
+      <li><a href="#prep">Before you start</a></li>
+      <li><a href="#step0">Step 0 · Get the files</a></li>
+      <li><a href="#step1">Step 1 · Download</a></li>
+      <li><a href="#step2">Step 2 · Launch</a></li>
+      <li><a href="#step3">Step 3 · Format</a></li>
+      <li><a href="#step4">Step 4 · Train</a></li>
+      <li><a href="#step5">Step 5 · Test</a></li>
+      <li><a href="#faq">FAQ</a></li>
+      <li><a href="#backup">Back up the model</a></li>
+    </ul>
+  </div>
+
+  <!-- prep -->
+  <div class="card" id="prep">
+    <h2><span class="no">✓</span>Before you start: can your computer handle it?</h2>
+    <div class="req"><b>A Windows PC with an NVIDIA graphics card, 8GB+ of VRAM.</b><br>
+      How to check your GPU: press <code>Ctrl + Shift + Esc</code> to open Task Manager → click "Performance" → find "GPU" on the left → the top-right shows the GPU model and VRAM. If you see an N-card (GTX / RTX prefix), you're fine. The VRAM line needs to be above 8GB.</div>
+    <div class="req"><b>At least 30GB of free disk space.</b></div>
+    <div class="note"><b>Macs work too</b>, but training quality will be noticeably worse. If possible, borrow a Windows laptop instead.</div>
+    <div class="note"><b>No dedicated GPU (integrated only)? Training won't run.</b> Ask a friend with a gaming PC, or rent a cloud GPU.</div>
+  </div>
+
+  <!-- step 0 -->
+  <div class="card" id="step0">
+    <h2><span class="no">0</span>Get the recordings onto the computer<span class="eta">2 min</span></h2>
+    <ol class="step-list">
+      <li><span class="idx">1</span>What you exported from your phone is a <b>ZIP file</b>.</li>
+      <li><span class="idx">2</span>If you shared it to WeChat "File Transfer": open WeChat on the computer → find "File Transfer" → download the ZIP file.</li>
+      <li><span class="idx">3</span>Once downloaded, unzip it into a folder.</li>
+    </ol>
+    <div class="warn"><b>Important: the extracted folder path must NOT contain Chinese characters or spaces!</b><br>
+      Recommended: create an English-named folder directly on a drive root, e.g. <span class="path good">D:\voice</span></div>
+    <p style="margin:6px 0 2px">After unzipping, the structure should look like this:</p>
+<pre class="tree">D:\voice\
+├─ wavs\            <span class="cm">a bunch of wav audio files</span>
+├─ dataset.list     <span class="cm">the transcription file</span>
+├─ references\      <span class="cm">reference audio</span>
+└─ <span class="hl">NEXT-STEPS.html</span>    <span class="hlb">what you're reading now</span></pre>
+    <p style="margin-top:10px">Not recommended (Chinese + spaces, may cause errors):<br>
+    <span class="path bad">D:\My Files\Voice Backup\Recordings\</span></p>
+  </div>
+
+  <!-- step 1 -->
+  <div class="card" id="step1">
+    <h2><span class="no">1</span>Download the software<span class="eta">~20 min · depends on speed</span></h2>
+    <p>The software is called <b>GPT-SoVITS</b>. It's open source and free, made by Bilibili creator "Hua Er Bu Ku" (花儿不哭).</p>
+    <p>Download page (official GitHub releases):</p>
+    <p><a class="path good" href="https://github.com/RVC-Boss/GPT-SoVITS/releases">https://github.com/RVC-Boss/GPT-SoVITS/releases</a></p>
+    <div class="subhead">How to pick a version</div>
+    <ul>
+      <li>Look for names containing the full package ("整合包"), pick the latest date, e.g. <span class="path">GPT-SoVITS-v2pro-20250604.7z</span></li>
+      <li>Clean, high-quality recordings → use <b>v3 or v4</b></li>
+      <li>Some noise, or not sure → use <b>v2pro</b> (safer, less likely to fail)</li>
+      <li>Undecided → pick <b>v2pro</b>, it's the most forgiving</li>
+    </ul>
+    <p>If GitHub is slow or unreachable, search "花儿不哭" on Bilibili — the profile page has mirror downloads and detailed video tutorials.</p>
+    <div class="warn">What you download is an archive — <u>unzip it first</u>. Again, no Chinese characters or spaces in the path, e.g. <span class="path good">D:\GPT-SoVITS</span></div>
+  </div>
+
+  <!-- step 2 -->
+  <div class="card" id="step2">
+    <h2><span class="no">2</span>Launch it<span class="eta">~3 min</span></h2>
+    <p>In the extracted folder, find this file and double-click it:</p>
+    <p><span class="path good">go-webui.bat</span></p>
+    <p>A black console window will pop up and start loading. The first launch is slow — a few minutes is normal.</p>
+    <div class="warn"><b>Do NOT close that black window!</b> Closing it stops the software.</div>
+    <p>When it's loaded, a browser page opens automatically. If it doesn't, open your browser and type:<br>
+    <span class="path good">http://localhost:9874</span></p>
+    <div class="ok">If you can see the interface, you're good.</div>
+  </div>
+
+  <!-- step 3 -->
+  <div class="card" id="step3">
+    <h2><span class="no">3</span>Format the training set<span class="eta">~5 min</span></h2>
+    <p>This step lets the computer "understand" your recordings and prepares them for training. You only type paths and click buttons.</p>
+    <ol class="step-list">
+      <li><span class="idx">1</span>Switch to the "<b>1-GPT-SoVITS-TTS</b>" tab at the top</li>
+      <li><span class="idx">2</span>Find "<b>1A-训练集格式化工具</b>" (training set formatter)</li>
+      <li><span class="idx">3</span>Fill in the experiment/model name — English letters or numbers only, no Chinese. e.g. <span class="path">zhangsan</span></li>
+      <li><span class="idx">4</span>Fill in "文本标注文件" (transcription file) path — that's the <span class="path good">D:\voice\dataset.list</span> you just unzipped</li>
+      <li><span class="idx">5</span>Fill in "训练集音频文件夹路径" (audio folder) path — that's the wavs folder <span class="path good">D:\voice\wavs</span></li>
+      <li><span class="idx">6</span>Check "开启训练集格式化一键三连" (enable the one-click format trio)</li>
+      <li><span class="idx">7</span>Click "一键三连" (one-click trio) and wait. Progress shows at the bottom</li>
+    </ol>
+    <div class="ok">When you see something like "格式化完毕" (formatting complete), you're done.</div>
+    <div class="warn">If this step errors out, 99% of the time it's because the path has Chinese characters or spaces.<br>Go back to Step 0 and pick a pure-English path.</div>
+  </div>
+
+  <!-- step 4 -->
+  <div class="card" id="step4">
+    <h2><span class="no">4</span>Train the model<span class="eta">~20 min ~ 1 hour</span></h2>
+    <p>Switch to the "<b>1B-微调训练</b>" (fine-tuning) tab. Two models get trained, <b>in order — don't flip them</b>:</p>
+
+    <div class="divider-label">First: SoVITS</div>
+    <ol class="step-list">
+      <li><span class="idx">1</span>Click "开始 SoVITS 训练" (start SoVITS training)</li>
+      <li><span class="idx">2</span>Keep the default epoch count (usually 8)</li>
+      <li><span class="idx">3</span>Wait for the completion message</li>
+    </ol>
+
+    <div class="divider-label">Then: GPT</div>
+    <ol class="step-list">
+      <li><span class="idx">4</span>Click "开始 GPT 训练" (start GPT training)</li>
+      <li><span class="idx">5</span>Keep the default epoch count (usually 15)</li>
+      <li><span class="idx">6</span>Wait for the completion message</li>
+    </ol>
+
+    <div class="warn strong"><b>THE most important warning:</b> do NOT crank epochs up to 50 or 100 thinking "more training = better"!<br><br>
+      Too many epochs causes "overfitting" — the model memorizes the recordings, then can't say anything new, and produces metallic buzz, cracks and glitches.<br><br>
+      <b>The defaults are already the best. Leave them alone.</b></div>
+
+    <div class="tip">If you hit "out of memory" (显存不足): lower the batch_size (e.g. 8 → 4, then 2 if needed) and start training again. It'll be slower, but it will finish.</div>
+  </div>
+
+  <!-- step 5 -->
+  <div class="card" id="step5">
+    <h2><span class="no">5</span>Test it — make them speak<span class="eta">~2 min</span></h2>
+    <p>Switch to the "<b>1C-推理</b>" (inference) tab.</p>
+    <ol class="step-list">
+      <li><span class="idx">1</span>Click "刷新模型路径" (refresh model paths). In the <b>GPT model</b> dropdown, pick the one you just trained (its name contains <span class="path">zhangsan</span>); do the same in the <b>SoVITS model</b> dropdown</li>
+      <li><span class="idx">2</span>Upload a reference audio: click upload and pick any wav from the references folder (the ones you starred as reference candidates on your phone)</li>
+      <li><span class="idx">3</span>Fill in "参考音频的文本" (reference audio text): type <b>exactly, word for word</b>, what that reference clip says. This matters — it noticeably improves similarity</li>
+      <li><span class="idx">4</span>Pick "参考音频的语种" (reference audio language). For Chinese recordings, choose Chinese (中文)</li>
+      <li><span class="idx">5</span>In "需要合成的文本" (text to synthesize), type what you want them to say, e.g.: <span class="path">The weather is nice today. Shall we go out?</span></li>
+      <li><span class="idx">6</span>Click "合成语音" (synthesize speech). Wait a few seconds — and you'll hear them</li>
+    </ol>
+    <div class="tip"><b>Want a different mood?</b> Just swap the reference audio — no retraining needed. Happy reference → happy voice. Gentle reference → gentle voice.<br><br>
+    Remember: <b>whatever emotion the reference audio carries is the emotion the output speaks with.</b></div>
+  </div>
+
+  <!-- FAQ -->
+  <div class="card" id="faq">
+    <h2><span class="no">?</span>FAQ</h2>
+
+    <div class="faq">
+      <p class="q">The voice doesn't sound quite like them?</p>
+      <div class="a">Don't rush to retrain. Check in order:
+        <ol>
+          <li>Try a different reference audio (works fastest)</li>
+          <li>Is the reference audio text filled in exactly?</li>
+          <li>Is total recording long enough? 1 minute is the floor; 5+ minutes is much better</li>
+          <li>Any background noise? Noise drags everything down</li>
+          <li>Try the v2pro build — more forgiving of source quality</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="faq">
+      <p class="q">Metallic buzz, glitchy artifacts, cracking?</p>
+      <div class="a">Too many training epochs — the model overfitted. Go back to Step 4 and retrain with fewer epochs (SoVITS: 4–8). Or switch to the v2pro build.</div>
+    </div>
+
+    <div class="faq">
+      <p class="q">It stalls mid-sentence / loops the same phrase?</p>
+      <div class="a">The input is too long. Split long text into short sentences and synthesize one at a time. In the "how to cut" option, choose "split by punctuation".</div>
+    </div>
+
+    <div class="faq">
+      <p class="q">The software won't open / keeps erroring?</p>
+      <div class="a">
+        <ol>
+          <li>Check the path for Chinese characters and spaces (this fixes most problems)</li>
+          <li>Check you actually unzipped it before running</li>
+          <li>Check your GPU driver isn't ancient — update the NVIDIA driver</li>
+          <li>See the troubleshooting section of the official tutorial</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="faq">
+      <p class="q">Power cut mid-training / accidentally closed the window?</p>
+      <div class="a">It's fine — just run it again. The recordings you made are safe (they're in <span class="path">D:\voice</span>); you'll just need to redo Steps 3 and 4.</div>
+    </div>
+  </div>
+
+  <!-- backup -->
+  <div class="card" id="backup">
+    <h2><span class="no">★</span>Important: back up the trained model</h2>
+    <p>After training, the model files live in these two spots inside the package folder:</p>
+<pre class="tree">GPT-SoVITS-v2pro-xxx\
+├─ GPT_weights\
+├─ SoVITS_weights\</pre>
+    <p>Find the <b>two</b> files whose names contain your model name (e.g. <span class="path">zhangsan</span>), and copy them to cloud storage or an external drive.</p>
+    <p><b>Those two files ARE "their voice"</b> — hours of recordings, condensed into two files.</p>
+    <div class="warn">If you reinstall the OS or delete the package folder, the model is gone and must be retrained from scratch.<b> Back it up.</b></div>
+  </div>
+
+  <!-- final -->
+  <div class="card center">
+    <h2 style="justify-content:center">A few words before you go</h2>
+    <p>The technical part ends here. But a few words first:</p>
+    <p style="font-size:15.5px;line-height:2">These recordings are evidence that this person truly existed.<br>
+    The way they said your name, the way they laughed, the little phrases they always used — <b>all of it is preserved now.</b></p>
+    <p>Please guard these files carefully. Voice is biometric data, the same category as fingerprints and faces.</p>
+    <p>If you plan to let family use this model too, it's worth telling everyone up front that it exists, and who is allowed to use it.</p>
+    <div class="divider"></div>
+    <p style="font-size:32px;font-weight:700;line-height:1.4;color:#2f7d5d;margin:0">Good luck</p>
+  </div>
+
+  <p class="foot">Voice Archive · 声音留档</p>
+</div>
+</body>
+</html>

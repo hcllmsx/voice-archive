@@ -30,8 +30,8 @@ const VR = window.VoiceRecorder;
 const ZH = window.I18N_LANGS.zh.guide;
 const EN = window.I18N_LANGS.en.guide;
 
-// 独立文档（导出包里「接下来怎么做.txt」的来源）
-const NEXT_STEPS_ZH = fs.readFileSync(path.join(root, 'nextsteps', 'next-steps.zh.txt'), 'utf8');
+// 独立文档（导出包里「接下来怎么做.html」的来源）
+const NEXT_STEPS_ZH = fs.readFileSync(path.join(root, 'nextsteps', 'next-steps.zh.html'), 'utf8');
 
 let failed = 0;
 function check(name, cond) {
@@ -42,7 +42,7 @@ function check(name, cond) {
 /* ---------------- 1. 内容完整性 ---------------- */
 console.log('\n[content]');
 check('中文说明文档含路径 D:\\voice', NEXT_STEPS_ZH.includes('D:\\voice'));
-check('中文说明文档含权重保存路径', NEXT_STEPS_ZH.includes('GPT-SoVITS-v2pro-xxx\\GPT_weights\\'));
+check('中文说明文档含权重目录', NEXT_STEPS_ZH.includes('GPT_weights') && NEXT_STEPS_ZH.includes('SoVITS_weights'));
 check('说明文档反斜杠未被转义成垂直制表符', !NEXT_STEPS_ZH.includes('\x0b'));
 check('中文说明文档完整（含结尾祝福）', NEXT_STEPS_ZH.includes('祝你顺利'));
 
@@ -129,7 +129,7 @@ console.log('\n[zip round-trip]');
   const wavBytes = new Uint8Array(1000);
   for (let i = 0; i < wavBytes.length; i++) wavBytes[i] = i & 0xFF;
   zip.add('wavs/0001.wav', wavBytes);
-  zip.add('接下来怎么做.txt', NEXT_STEPS_ZH);
+  zip.add('接下来怎么做.html', NEXT_STEPS_ZH);
   zip.add('dataset.list', 'E:\\voice\\wavs\\0001.wav|nainai|zh|你好\n');
   zip.add('project.json', JSON.stringify({ app: 'voice-archive', ok: true }));
 
@@ -140,15 +140,15 @@ console.log('\n[zip round-trip]');
     const entries = ZIP.read(buf);
     const names = entries.map(e => e.name);
     check('目录项存在', names.includes('wavs/'));
-    check('中文名文件保留', names.includes('接下来怎么做.txt'));
+    check('中文名文件保留', names.includes('接下来怎么做.html'));
     check('4 个文件 + 1 个目录', names.length === 5);
 
     const wavBack = ZIP.find(entries, 'wavs/0001.wav');
     check('WAV 字节一致', wavBack && wavBack.length === wavBytes.length &&
       wavBack.every((b, i) => b === wavBytes[i]));
 
-    const txtBack = new TextDecoder('utf-8').decode(ZIP.find(entries, '接下来怎么做.txt'));
-    check('中文文本一致（与独立 txt 文件）', txtBack === NEXT_STEPS_ZH);
+    const txtBack = new TextDecoder('utf-8').decode(ZIP.find(entries, '接下来怎么做.html'));
+    check('中文文本一致（与独立 HTML 文档）', txtBack === NEXT_STEPS_ZH);
 
     const listBack = new TextDecoder('utf-8').decode(ZIP.find(entries, 'dataset.list'));
     check('dataset.list 一致', listBack === 'E:\\voice\\wavs\\0001.wav|nainai|zh|你好\n');
