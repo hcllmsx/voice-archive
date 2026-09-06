@@ -229,6 +229,7 @@
       platformIos: 'iPhone / iPad (Safari)',
       platformAndroid: 'Android (Chrome / Edge)',
       installOptional: 'It works without adding, but recordings face a higher risk of being cleared by the system.',
+      installDataNote: 'Recordings are stored in this browser, so your existing data stays exactly where it is after installing. Switching to another browser or device won\'t move them automatically — export a backup in Settings, then import it there.',
       btnGotIt: 'Got it',
       btnNeverAgain: 'Don\'t show again',
 

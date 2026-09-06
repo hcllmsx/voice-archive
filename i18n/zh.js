@@ -229,6 +229,7 @@
       platformIos: 'iPhone / iPad（Safari）',
       platformAndroid: '安卓（Chrome / Edge）',
       installOptional: '不添加也能用，只是录音被系统清理的风险更高一些。',
+      installDataNote: '录音数据存在当前浏览器里，安装后已录内容原样还在。若换浏览器或换设备使用，数据不会自动跟过去，需要在「设置」里导出备份后再导入。',
       btnGotIt: '知道了',
       btnNeverAgain: '以后不再提示',
 

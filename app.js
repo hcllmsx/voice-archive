@@ -1881,6 +1881,7 @@
       '<p class="modal-text muted">' + esc(isIos ? T('platformIos') : T('platformAndroid')) + '</p>' +
       '<ol class="steps">' + steps.map(function (s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ol>' +
       '<p class="modal-text muted small">' + esc(T('installOptional')) + '</p>' +
+      '<p class="modal-text muted small">' + esc(T('installDataNote')) + '</p>' +
       '<div class="modal-actions col">' +
       '<button class="btn primary" data-act="modal-close">' + esc(T('btnGotIt')) + '</button>' +
       (allowDismiss === false
