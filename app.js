@@ -103,7 +103,20 @@
   }
 
   function buildProjectTasks(p) {
-    return C.buildTasks(p.ageGroup, p.language || 'zh', p.dialect, guideLangOf(p), I18N.getUiLang());
+    const tasks = C.buildTasks(p.ageGroup, p.language || 'zh', p.dialect, guideLangOf(p), I18N.getUiLang());
+    // 用户自己补充的句子：没有引导、没有提示，句子的文字就是他要读的内容。
+    // 持久化在项目记录的 customTexts 里，每次进项目都排在任务队列末尾。
+    ((p && p.customTexts) || []).forEach(function (ct) {
+      tasks.push({
+        id: 'custom.' + ct.id,
+        group: 'custom',
+        groupTitle: T('customGroup'),
+        label: ct.text,
+        tip: '',
+        idea: ''
+      });
+    });
+    return tasks;
   }
 
   let toastTimer = 0;
@@ -300,7 +313,8 @@
       html += '<ul class="proj-list">';
       state.projects.forEach(function (p) {
         const g = C.ageGroup(p.ageGroup, I18N.getUiLang());
-        const total = C.buildTasks(p.ageGroup, p.language || 'zh', p.dialect).length;
+        const preset = C.buildTasks(p.ageGroup, p.language || 'zh', p.dialect).length;
+        const total = preset + ((p.customTexts || []).length);
         const done = Math.min(p.clipCount || 0, total);
         const pct = total ? Math.round(done / total * 100) : 0;
         const langTag = p.dialect || C.language(p.language, I18N.getUiLang()).label;
@@ -703,6 +717,10 @@
     const task = state.tasks[state.cursor];
     const total = state.tasks.length;
     const done = doneCount();
+    const allDone = done >= total && !state.pending;
+    // 可「＋ 新增一句」的时机：没有待确认/未在录音/未在倒计时。
+    // 全部录完时入口放在「都录完了」卡片上，避免和这里重复。
+    const canAddCustom = !state.pending && !state.recording && state.countdown <= 0 && !allDone;
 
     let html = '<nav class="crumbs">' +
       '<button class="btn tiny ghost" data-act="go-home">' + esc(T('crumbProjects')) + '</button>' +
@@ -723,7 +741,7 @@
       '<div class="bar thin"><i style="width:' + (total ? Math.round(done / total * 100) : 0) + '%"></i></div>' +
       '</section>';
 
-    html += '<section class="task-card' + (state.recording ? ' rec' : '') + '">' +
+    html += '<section class="task-card' + (task.group === 'custom' ? ' custom' : '') + (state.recording ? ' rec' : '') + '">' +
       '<div class="task-head">' +
       '<p class="task-group">' + esc(task.groupTitle) + '</p>' +
       (task.idea
@@ -736,13 +754,14 @@
       (task.idea ? '<p class="task-idea"' + (state.showIdeas ? '' : ' hidden') + '>' + esc(task.idea) + '</p>' : '') +
       '</section>';
 
-    if (done >= total && !state.pending) {
+    if (allDone) {
       const secs = state.clips.reduce(function (s, c) { return s + (c.duration || 0); }, 0);
       html += '<section class="card done-card">' +
         '<h2>' + esc(T('allDone')) + '</h2>' +
         '<p>' + T('allDoneBody', { n: done, total: esc(fmtTotal(secs)) }) + '</p>' +
         '<p class="muted small">' + esc(T('allDoneHint')) + '</p>' +
         '<button class="btn primary block" data-act="go-export">' + esc(T('btnExport')) + '</button>' +
+        '<button class="btn ghost block" data-act="add-custom">' + esc(T('btnAddCustom')) + '</button>' +
         '<button class="btn ghost block" data-act="go-manage">' + esc(T('btnViewClips')) + '</button>' +
         '</section>';
     } else if (state.pending) {
@@ -752,21 +771,33 @@
     }
 
     html += '<section class="card tasks-card' + (state.showTaskList ? ' open' : '') + '">' +
-      '<button class="btn ghost block" data-act="toggle-tasks">' +
+      '<div class="tc-actions">' +
+      '<button class="btn ghost" data-act="toggle-tasks">' +
       esc(state.showTaskList
         ? T('hideAllLines')
-        : T('showAllLines', { n: total })) + '</button>';
+        : T('showAllLines', { n: total })) + '</button>' +
+      (canAddCustom
+        ? '<button class="btn ghost add-custom-btn" data-act="add-custom">' + esc(T('btnAddCustom')) + '</button>'
+        : '') +
+      '</div>';
     if (state.showTaskList) {
       html += '<ul class="task-list">';
       state.tasks.forEach(function (t, i) {
         const c = clipFor(t.id);
-        html += '<li class="' + (i === state.cursor ? 'current ' : '') + (c ? 'done' : '') + '">' +
+        html += '<li class="' + (i === state.cursor ? 'current ' : '') + (c ? 'done' : '') +
+          (t.group === 'custom' ? ' custom' : '') + '">' +
+          '<div class="task-row">' +
           '<button class="task-jump" data-act="jump" data-i="' + i + '">' +
           '<span class="tl-no">' + pad(i + 1, 2) + '</span>' +
           '<span class="tick">' + (c ? '●' : '○') + '</span>' +
           '<span class="tl-text">' + esc(t.label) + '</span>' +
           (c ? '<span class="tl-dur">' + esc(fmtDuration(c.duration)) + '</span>' : '') +
-          '</button></li>';
+          '</button>' +
+          (t.group === 'custom'
+            ? '<button type="button" class="btn tiny icon-only t-remove" data-act="remove-custom" data-tid="' + t.id + '" ' +
+              'title="' + esc(T('btnRemove')) + '" aria-label="' + esc(T('btnRemove')) + '">✕</button>'
+            : '') +
+          '</div></li>';
       });
       html += '</ul>';
     }
@@ -903,12 +934,14 @@
         render();
         return;
       }
+      const pendingTask = state.tasks[state.cursor];
       state.pending = {
-        task: state.tasks[state.cursor],
+        task: pendingTask,
         blob: res.blob,
         url: URL.createObjectURL(res.blob),
         duration: res.duration,
-        text: ''
+        // 自己补充的句子：他输入的文字就是这句要读的内容，直接预填，省得再敲一遍
+        text: (pendingTask && pendingTask.group === 'custom') ? pendingTask.label : ''
       };
       render();
       // 进入界面立刻聚焦文本框（不等播放完）：录音人就在现场，当场记录最准。
@@ -934,6 +967,86 @@
     if (state.pending && state.pending.url) URL.revokeObjectURL(state.pending.url);
     state.pending = null;
     render();
+  }
+
+  /* ---------------- 自定义补充句 ---------------- */
+
+  /** 弹「新增一句」：直接输入文本，不配问题 / 提示 */
+  function addCustomForm() {
+    openModal(
+      '<h3 class="modal-title">' + esc(T('customTitle')) + '</h3>' +
+      '<div class="form">' +
+      '<label class="field"><span>' + esc(T('fCustomText')) + '</span>' +
+      '<textarea id="f-custom-text" rows="3" maxlength="200" placeholder="' + esc(T('phCustomText')) + '"></textarea></label>' +
+      '<p class="muted small">' + esc(T('customHint')) + '</p>' +
+      '</div>' +
+      '<div class="modal-actions">' +
+      '<button class="btn ghost" data-act="modal-close">' + esc(T('btnCancel')) + '</button>' +
+      '<button class="btn primary" data-act="add-custom-ok">' + esc(T('btnAddCustomOk')) + '</button>' +
+      '</div>'
+    );
+    setTimeout(function () {
+      const t = document.getElementById('f-custom-text');
+      if (t) t.focus();
+    }, 30);
+  }
+
+  /** 保存自定义句 → 排到队列末尾并跳过去，随时可以开录 */
+  function confirmAddCustom() {
+    const el = document.getElementById('f-custom-text');
+    const text = (el ? el.value : '').trim();
+    if (!text) { toast(T('toastCustomEmpty')); return; }
+    const ct = {
+      id: 'u_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8),
+      text: text,
+      createdAt: Date.now()
+    };
+    const list = ((state.project && state.project.customTexts) || []).slice();
+    list.push(ct);
+    DB.updateProject(state.project.id, { customTexts: list }).then(function (upd) {
+      if (upd) state.project = upd;
+      else state.project.customTexts = list;
+      state.tasks = buildProjectTasks(state.project);
+      state.cursor = state.tasks.length - 1;   // 直接跳到刚加的这句
+      state.pending = null;
+      state.showTaskList = false;
+      closeModal();
+      render();
+      toast(T('toastCustomAdded'));
+    }).catch(function (e) {
+      toast(T('toastSaveFail', { msg: e && e.message ? e.message : '-' }));
+    });
+  }
+
+  /** 从任务清单里移除自定义句：连这句已录的音频一起删（确认后执行） */
+  function removeCustomTask(taskId) {
+    if (state.recording || state.pending) return;
+    if (state.countdown) clearCountdown();
+    const entry = ((state.project && state.project.customTexts) || []).filter(function (x) {
+      return 'custom.' + x.id === taskId;
+    })[0];
+    if (!entry) return;
+    confirmModal(T('delCustomTitle'),
+      esc(T('delCustomBody', { text: entry.text })),
+      T('btnRemove')).then(function (ok) {
+        if (!ok) { closeModal(); return null; }
+        const doomed = state.clips.filter(function (c) { return c.taskId === taskId; });
+        return Promise.all(doomed.map(function (c) { return DB.deleteClip(c.id); })).then(function () {
+          state.clips = state.clips.filter(function (c) { return c.taskId !== taskId; });
+          const list = ((state.project && state.project.customTexts) || []).filter(function (x) { return x.id !== entry.id; });
+          return DB.updateProject(state.project.id, { customTexts: list }).then(function (upd) {
+            if (upd) state.project = upd;
+            else state.project.customTexts = list;
+            state.tasks = buildProjectTasks(state.project);
+            if (state.cursor >= state.tasks.length) state.cursor = Math.max(0, state.tasks.length - 1);
+            closeModal();
+            render();
+            toast(T('toastRemoved'));
+          });
+        });
+      }).catch(function (e) {
+        toast(T('toastSaveFail', { msg: e && e.message ? e.message : '-' }));
+      });
   }
 
   function confirmClip() {
@@ -1364,7 +1477,8 @@
         id: p.id, nickname: p.nickname, speakerId: p.speakerId,
         ageGroup: p.ageGroup, language: p.language, dialect: p.dialect || '',
         purpose: p.purpose || 'train', targetPath: dir,
-        createdAt: p.createdAt, exportCount: batch
+        createdAt: p.createdAt, exportCount: batch,
+        customTexts: p.customTexts || []
       },
       clips: metas
     }, null, 2));
@@ -1551,6 +1665,32 @@
     return VR.decodeFile(file);
   }
 
+  /** 恢复自定义句：从 project.json 的 customTexts 拿；没有时（旧备份）也能从
+      clips 里 custom.* 任务反推出来。与项目已有的按 id 合并，不产生重复。 */
+  function restoreCustomTexts(project, customList, metas) {
+    const existing = (project && project.customTexts) || [];
+    const byId = {};
+    const list = existing.slice();
+    existing.forEach(function (x) { byId[x.id] = true; });
+    const want = [];
+    if (Array.isArray(customList)) customList.forEach(function (x) { want.push(x); });
+    (metas || []).forEach(function (m) {
+      if (m && typeof m.taskId === 'string' && m.taskId.indexOf('custom.') === 0 && m.taskLabel) {
+        want.push({ id: m.taskId.slice(7), text: m.taskLabel });
+      }
+    });
+    want.forEach(function (x) {
+      if (x && x.id && x.text && !byId[x.id]) {
+        byId[x.id] = true;
+        list.push({ id: x.id, text: x.text, createdAt: x.createdAt || 0 });
+      }
+    });
+    if (list.length === existing.length) return Promise.resolve(project);
+    return DB.updateProject(project.id, { customTexts: list }).then(function (u) {
+      return u || project;
+    });
+  }
+
   function importJson(data, files) {
     if (!data || !data.project) {
       const wavs = files.filter(function (f) { return /\.wav$/i.test(f.name); });
@@ -1583,6 +1723,8 @@
         purpose: meta.purpose || 'train',
         targetPath: meta.targetPath || ''
       });
+    }).then(function (project) {
+      return restoreCustomTexts(project, meta.customTexts, metas);
     }).then(function (project) {
       return DB.getClips(project.id).then(function (old) {
         // 按时间戳去重，避免重复导入
@@ -1868,6 +2010,11 @@
       case 'rerecord': rerecord(); break;
       case 'confirm-clip': confirmClip(); break;
       case 'discard-clip': discardClip(); break;
+      case 'add-custom':
+        if (!state.recording && !state.pending && state.countdown <= 0) addCustomForm();
+        break;
+      case 'add-custom-ok': confirmAddCustom(); break;
+      case 'remove-custom': removeCustomTask(el.getAttribute('data-tid')); break;
       case 'toggle-tasks': state.showTaskList = !state.showTaskList; render(); break;
       case 'toggle-resume': state.showResume = !state.showResume; render(); break;
       case 'toggle-idea': {
@@ -2095,7 +2242,7 @@
       state.projects.unshift(row);
     }
     ['nickname', 'speakerId', 'ageGroup', 'language', 'dialect', 'purpose', 'recGuideSeen',
-      'createdAt', 'updatedAt', 'exportCount', 'lastBackupCount', 'targetPath']
+      'createdAt', 'updatedAt', 'exportCount', 'lastBackupCount', 'targetPath', 'customTexts']
       .forEach(function (k) {
         if (p[k] !== undefined) row[k] = p[k];
       });

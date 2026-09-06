@@ -619,6 +619,20 @@ h1, h2, h3 {
   from { opacity: 0; transform: translateY(3px); }
 }
 
+/* 自定义补充句：句子的文字就是他要读的内容。
+   进入录音后也保持大字、不弱化，方便他一边看一边读。 */
+.task-card.custom .task-label {
+  font-weight: 600;
+}
+.task-card.custom.rec .task-label {
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--ink);
+  margin: 0 0 16px;
+  animation: none;
+}
+
 .recorder {
   text-align: center;
   padding: 12px 0 20px;
@@ -897,6 +911,24 @@ textarea { resize: vertical; }
 
 .tl-text { flex: 1; }
 .tl-dur { font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* 任务卡顶部的操作行：「查看全部句子」+「＋ 新增一句」并排 */
+.tc-actions { display: flex; gap: 8px; }
+.tc-actions .btn { flex: 1 1 0; min-width: 0; }
+.tc-actions .add-custom-btn { flex: 0 0 auto; }
+
+/* 自定义句在清单里的行：跳转按钮让位，右侧留移除按钮 */
+.task-row { display: flex; align-items: center; }
+.task-row .task-jump { flex: 1; min-width: 0; }
+.task-list li.custom .t-remove {
+  flex: 0 0 auto;
+  color: var(--line-2);
+  border-color: transparent;
+  background: transparent;
+  padding: 4px 6px;
+  font-size: 13px;
+}
+.task-list li.custom .t-remove:active { color: var(--amber); }
 
 /* ================================================================== */
 /* 素材管理                                                            */
