@@ -344,9 +344,37 @@ h1, h2, h3 {
   background: rgba(163, 69, 47, 0.07);
 }
 
-/* 试听卡按钮行：「放弃本次」靠右，与主操作「保存，下一句」组成右侧操作组 */
-.review .row .danger-outline {
-  margin-left: auto;
+/* 试听卡按钮行：始终同一行，前两个按钮靠左、「放弃本次」靠右 */
+.review .review-actions {
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.review .review-actions .ra-left {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+  min-width: 0;
+}
+.review .review-actions .btn {
+  font-size: 13px;
+  line-height: 1.2;
+  padding: 9px 12px;
+  white-space: nowrap;
+}
+.review .review-actions .danger-outline {
+  flex-shrink: 0;
+}
+/* 特别窄的屏再把按钮缩一点，保证三个按钮始终排在一行 */
+@media (max-width: 340px) {
+  .review .review-actions .btn {
+    font-size: 12px;
+    padding: 8px 9px;
+  }
+  .review .review-actions {
+    gap: 6px;
+  }
 }
 
 .btn.block {

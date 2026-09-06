@@ -93,7 +93,7 @@
       fClipText: 'What was said (type it while it\'s fresh)',
       phClipText: 'Write it down word for word',
       btnRerecord: 'Redo',
-      btnSaveNext: 'Save, next one',
+      btnSaveNext: 'Save',
       btnDiscardClip: 'Discard take',
       ideaBtn: 'Give me an idea',
       toastNoRecHere: 'Can\'t record here — see the banner above for why',

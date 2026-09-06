@@ -789,9 +789,11 @@
       '<label class="field"><span>' + esc(T('fClipText')) + '</span>' +
       '<textarea id="clip-text" rows="3" placeholder="' + esc(T('phClipText')) + '">' +
       esc(pd.text || '') + '</textarea></label>' +
-      '<div class="row">' +
+      '<div class="row review-actions">' +
+      '<span class="ra-left">' +
       '<button class="btn ghost" data-act="rerecord">' + esc(T('btnRerecord')) + '</button>' +
       '<button class="btn primary" data-act="confirm-clip">' + esc(T('btnSaveNext')) + '</button>' +
+      '</span>' +
       '<button class="btn danger-outline" data-act="discard-clip">' + esc(T('btnDiscardClip')) + '</button>' +
       '</div>' +
       '</section>';
@@ -878,6 +880,10 @@
     rec.stop().then(function (res) {
       state.recording = false;
       stopMeter();
+      // 录完立刻松开麦克风。不释放的话 getUserMedia 的通道会一直被占着，
+      // 之后用输入法的「语音转文字」会提示录音通道被占用。
+      // 下一句开录时 startRecord 会重新申请，成本很低。
+      rec.dispose();
       if (!res || !res.duration || res.duration < 0.3) {
         toast(T('toastTooShort'));
         render();
@@ -891,14 +897,14 @@
         text: ''
       };
       render();
-      // 播放完立刻聚焦文本框：录音时人就在现场，当场记录比任何 ASR 都准
+      // 进入界面立刻聚焦文本框（不等播放完）：录音人就在现场，当场记录最准。
+      const t = document.getElementById('clip-text');
+      if (t) t.focus();
+      // 刚录的这句循环播放，方便对照着听；手动点暂停才会停。
       const audio = document.getElementById('preview');
       if (audio) {
+        audio.loop = true;
         audio.play().catch(function () {});
-        audio.addEventListener('ended', function () {
-          const t = document.getElementById('clip-text');
-          if (t) t.focus();
-        });
       }
     });
   }

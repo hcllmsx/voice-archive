@@ -93,7 +93,7 @@
       fClipText: '这句话说的是什么（当场敲下来最准）',
       phClipText: '一个字不差地写下来',
       btnRerecord: '重录',
-      btnSaveNext: '保存，下一句',
+      btnSaveNext: '保存',
       btnDiscardClip: '放弃本次',
       ideaBtn: '看看怎么说',
       toastNoRecHere: '当前环境不能录音，页面上方有原因说明',
