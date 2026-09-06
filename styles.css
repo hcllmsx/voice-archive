@@ -506,8 +506,17 @@ h1, h2, h3 {
   margin-bottom: 8px;
 }
 
-.task-group {
+/* 顶部一行：左「称呼 / 呼语」组名，右「看看怎么说」开关 */
+.task-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
   margin: 0 0 10px;
+}
+
+.task-group {
+  margin: 0;
   font-size: 12.5px;
   letter-spacing: 0.12em;
   color: var(--clay);
@@ -526,17 +535,20 @@ h1, h2, h3 {
   color: var(--muted);
 }
 
-/* 「给点思路」示例展开 */
+/* 「看看怎么说」开关：激活（示例常开）时高亮 */
 .idea-btn {
-  margin-top: 12px;
+  flex-shrink: 0;
+}
+.idea-btn.active {
+  background: var(--clay-soft);
+  border-color: var(--clay);
+  color: #7A3A20;
 }
 
+/* 示例文字与 task-tip 同槽位（开开关时替换显示），样式对齐 tip */
 .task-idea {
   margin: 0;
-  padding-top: 10px;
-  margin-top: 12px;
-  border-top: 1px dashed var(--line);
-  font-size: 13.5px;
+  font-size: 14px;
   line-height: 1.7;
   color: var(--muted);
   white-space: pre-wrap;
@@ -806,6 +818,13 @@ textarea { resize: vertical; }
 
 .task-list li:last-child .task-jump { border-bottom: 0; }
 
+.task-list .tl-no {
+  font-size: 12.5px;
+  color: var(--line-2);
+  font-variant-numeric: tabular-nums;
+  min-width: 2ch;
+  text-align: right;
+}
 .task-list .tick { color: var(--line-2); }
 .task-list li.done .tick { color: var(--clay); }
 .task-list li.done .tl-text { color: var(--muted); }

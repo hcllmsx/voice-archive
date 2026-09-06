@@ -48,6 +48,8 @@
     lastZip: null,
     showTaskList: false,
     showResume: false,
+    /* 「看看怎么说」示例开关：用户打开后跨句保持，直到再次点击关闭 */
+    showIdeas: false,
     editingProjectId: null,
     _shareFn: null,
     _dlFn: null
@@ -685,14 +687,16 @@
       '</section>';
 
     html += '<section class="task-card">' +
+      '<div class="task-head">' +
       '<p class="task-group">' + esc(task.groupTitle) + '</p>' +
-      '<h2 class="task-label">' + esc(task.label) + '</h2>' +
-      (task.tip ? '<p class="task-tip">' + esc(task.tip) + '</p>' : '') +
       (task.idea
-        ? '<button type="button" class="btn tiny ghost idea-btn" data-act="toggle-idea" aria-expanded="false">' +
-          esc(T('ideaBtn')) + '</button>' +
-          '<p class="task-idea" hidden>' + esc(task.idea) + '</p>'
+        ? '<button type="button" class="btn tiny ghost idea-btn' + (state.showIdeas ? ' active' : '') + '" data-act="toggle-idea" aria-expanded="' + (state.showIdeas ? 'true' : 'false') + '">' +
+          esc(T('ideaBtn')) + '</button>'
         : '') +
+      '</div>' +
+      '<h2 class="task-label">' + esc(task.label) + '</h2>' +
+      (task.tip ? '<p class="task-tip"' + (state.showIdeas && task.idea ? ' hidden' : '') + '>' + esc(task.tip) + '</p>' : '') +
+      (task.idea ? '<p class="task-idea"' + (state.showIdeas ? '' : ' hidden') + '>' + esc(task.idea) + '</p>' : '') +
       '</section>';
 
     if (g.kid && done > 0) {
@@ -725,6 +729,7 @@
         const c = clipFor(t.id);
         html += '<li class="' + (i === state.cursor ? 'current ' : '') + (c ? 'done' : '') + '">' +
           '<button class="task-jump" data-act="jump" data-i="' + i + '">' +
+          '<span class="tl-no">' + pad(i + 1, 2) + '</span>' +
           '<span class="tick">' + (c ? '●' : '○') + '</span>' +
           '<span class="tl-text">' + esc(t.label) + '</span>' +
           (c ? '<span class="tl-dur">' + esc(fmtDuration(c.duration)) + '</span>' : '') +
@@ -1819,12 +1824,16 @@
       case 'toggle-tasks': state.showTaskList = !state.showTaskList; render(); break;
       case 'toggle-resume': state.showResume = !state.showResume; render(); break;
       case 'toggle-idea': {
-        // 「给点思路」示例展开：只动本卡片的两个节点，不整页重渲染
-        const box = el.parentNode.querySelector('.task-idea');
-        if (!box) break;
-        const open = !box.hidden;
-        box.hidden = open;
-        el.setAttribute('aria-expanded', String(!open));
+        // 「看看怎么说」示例开关：全局保持（切到下一句仍保持当前开/关状态），
+        // 直到用户再次点击。只动当前卡片节点，不整页重渲染，避免打断录音。
+        state.showIdeas = !state.showIdeas;
+        const card = el.closest('.task-card');
+        const tip = card && card.querySelector('.task-tip');
+        const box = card && card.querySelector('.task-idea');
+        if (tip) tip.hidden = state.showIdeas;
+        if (box) box.hidden = !state.showIdeas;
+        el.classList.toggle('active', state.showIdeas);
+        el.setAttribute('aria-expanded', String(state.showIdeas));
         break;
       }
       case 'jump':
