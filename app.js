@@ -272,14 +272,16 @@
   /* 页脚伦理提示                                                        */
   /* ================================================================== */
   function footerHTML() {
+    // 署名跟随界面语言：中文「声音留档 v版本号 · 火车啦啦」，英文「Voice Archive v版本号 · 火车啦啦」
+    const appName = I18N.getUiLang() === 'en' ? C.APP.nameEn : C.APP.name;
     return '<footer class="ethics">' +
       '<p>' + esc(T('footerNote1')) + '</p>' +
       '<p>' + esc(T('footerNote2')) + '</p>' +
       '<p class="sign">' +
       '<a href="' + esc(C.APP.repo) + '" target="_blank" rel="noopener noreferrer">' +
-      esc(C.APP.name) + ' · ' + esc(C.APP.nameEn) + '</a> · ' +
+      esc(appName + ' v' + C.APP.version) + '</a> · ' +
       '<a href="' + esc(C.APP.authorUrl) + '" target="_blank" rel="noopener noreferrer">' +
-      esc(C.APP.author) + '</a>（' + esc(C.APP.authorId) + '）</p>' +
+      esc(C.APP.author) + '</a></p>' +
       '</footer>';
   }
 
