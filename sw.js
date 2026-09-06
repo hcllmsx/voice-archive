@@ -11,7 +11,7 @@
  */
 
 // 缓存桶 = voice-archive-<版本号>：由 sync-version.bat 维护，一般不要手改
-var CACHE = 'voice-archive-26.9.6';
+var CACHE = 'voice-archive-26.9.6.21';
 
 var SHELL = [
   './',

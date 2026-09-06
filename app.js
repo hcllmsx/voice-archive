@@ -459,45 +459,29 @@
   }
 
   /* ---------------- 项目设置 ---------------- */
-  /** 打开项目设置：改昵称 / 模型名 / 年龄段 / 语言 / 用途 */
+  /**
+   * 打开项目设置：只能改昵称和模型名。
+   * 年龄段 / 语言 / 用途一旦改了，整套引导句子就会换成另一组，
+   * 已经录好的音频会对不上号，所以建项目时定好就锁死。
+   */
   function projectSettingsForm(id) {
     const p = state.projects.filter(function (x) { return x.id === id; })[0] ||
       (state.project && state.project.id === id ? state.project : null);
     if (!p) return;
     state.editingProjectId = p.id;
 
-    const ui = I18N.getUiLang();
-    const groups = C.AGE_GROUPS.map(function (g) {
-      const gl = C.ageGroup(g.id, ui);
-      return '<label class="chip"><input type="radio" name="ageGroup" value="' + g.id + '"' +
-        (g.id === p.ageGroup ? ' checked' : '') + '><span>' +
-        esc(gl.label + '（' + gl.range + '）') + '</span></label>';
-    }).join('');
-    const langs = C.LANGUAGES.map(function (l) {
-      const ll = C.language(l.code, ui);
-      return '<label class="chip"><input type="radio" name="language" value="' + l.code + '"' +
-        (l.code === p.language ? ' checked' : '') + '><span>' + esc(ll.label) + '</span></label>';
-    }).join('');
-    const purposes = C.PURPOSES.map(function (x) {
-      const pl = C.purpose(x.id, ui);
-      return '<label class="chip"><input type="radio" name="purpose" value="' + x.id + '"' +
-        (x.id === (p.purpose || 'train') ? ' checked' : '') + '><span>' + esc(pl.label) + '</span></label>';
-    }).join('');
+    // 纯存档项目没有模型名，就只剩昵称可改
+    const isArchive = (p.purpose || 'train') === 'archive';
+    const speakerField = isArchive ? '' :
+      '<label class="field" id="f-speaker-wrap"><span>' + esc(T('fSpeaker')) + '</span>' +
+      '<input type="text" id="f-speaker" value="' + esc(p.speakerId || '') + '" maxlength="24"></label>';
 
     openModal(
       '<h3 class="modal-title">' + esc(T('projectSettingsTitle')) + '</h3>' +
       '<div class="form">' +
       '<label class="field"><span>' + esc(T('fNickname')) + '</span>' +
       '<input type="text" id="f-nickname" value="' + esc(p.nickname) + '" maxlength="20"></label>' +
-      '<div class="field"><span>' + esc(T('fAgeGroup')) + '</span><div class="chips">' + groups + '</div></div>' +
-      '<div class="field"><span>' + esc(T('fLanguage')) + '</span><div class="chips">' + langs + '</div>' +
-      '<p class="muted small" id="lang-hint"></p></div>' +
-      '<label class="field" id="f-dialect-wrap" hidden><span>' + esc(T('fDialect')) + '</span>' +
-      '<input type="text" id="f-dialect" value="' + esc(p.dialect || '') + '" maxlength="20"></label>' +
-      '<div class="field"><span>' + esc(T('fPurpose')) + '</span><div class="chips">' + purposes + '</div>' +
-      '<p class="muted small" id="purpose-hint"></p></div>' +
-      '<label class="field" id="f-speaker-wrap"><span>' + esc(T('fSpeaker')) + '</span>' +
-      '<input type="text" id="f-speaker" value="' + esc(p.speakerId || '') + '" maxlength="24"></label>' +
+      speakerField +
       '<p class="muted small">' + esc(T('projectSettingsHint')) + '</p>' +
       '</div>' +
       '<div class="modal-actions">' +
@@ -507,7 +491,6 @@
       '<button type="button" class="btn danger-ghost block" data-act="delete-project">' +
       esc(T('btnDeleteProject')) + '</button>'
     );
-    setTimeout(syncProjectForm, 0);
   }
 
   /** 删除整个项目及其全部录音（二次确认，确认里会报出有多少段录音） */
@@ -558,28 +541,19 @@
     const nickname = (document.getElementById('f-nickname').value || '').trim();
     if (!nickname) { toast(T('toastNeedNickname')); return; }
 
-    const speakerRaw = (document.getElementById('f-speaker').value || '').trim();
-    const ageGroup = (document.querySelector('input[name=ageGroup]:checked') || {}).value || p.ageGroup;
-    const language = (document.querySelector('input[name=language]:checked') || {}).value || p.language;
-    const purpose = (document.querySelector('input[name=purpose]:checked') || {}).value || (p.purpose || 'train');
-    const dialectEl = document.getElementById('f-dialect');
-    const dialect = (C.language(language).dialectable && dialectEl)
-      ? (dialectEl.value || '').trim()
-      : '';
+    // 只改昵称和模型名（纯存档项目没有模型名，就只改昵称）
+    const speakerEl = document.getElementById('f-speaker');
+    const speakerRaw = speakerEl ? (speakerEl.value || '').trim() : '';
     const speakerId = speakerRaw.replace(/[^a-zA-Z0-9_]/g, '') || p.speakerId;
 
-    DB.updateProject(p.id, {
-      nickname: nickname, speakerId: speakerId, ageGroup: ageGroup,
-      language: language, dialect: dialect, purpose: purpose
-    }).then(function (upd) {
+    DB.updateProject(p.id, { nickname: nickname, speakerId: speakerId }).then(function (upd) {
       state.editingProjectId = null;
       closeModal();
       upsertProject(upd);
-      // 改的是当前打开的项目：同步内存里的项目，并按新设置重建任务队列
+      // 改的是当前打开的项目：同步内存里的项目，模型名变了导出目录名也跟着变
       if (state.project && state.project.id === upd.id) {
         state.project = upd;
-        state.tasks = buildProjectTasks(upd);
-        if (state.cursor >= state.tasks.length) state.cursor = 0;
+        state.clips = sortClipsByTask(state.clips);
       }
       render();
       toast(T('toastSaved'));
@@ -592,6 +566,39 @@
   /* ================================================================== */
   /* 页面 2：录音（核心页面）                                            */
   /* ================================================================== */
+  /** 句子在任务队列里的位置（0 起）；不在队列里的（外部导入的音频）返回 -1 */
+  function taskIndexOf(taskId) {
+    for (let i = 0; i < state.tasks.length; i++) {
+      if (state.tasks[i].id === taskId) return i;
+    }
+    return -1;
+  }
+
+  /**
+   * 片段按「句子顺序」排，而不是按录音先后：
+   * 先录哪句、后录哪句，都不影响编号——第 N 句永远是第 N 句，
+   * 跳着录、回头补录都不会把编号挤乱。
+   * 任务队列里找不到的（外部导入的音频）排最后，它们之间按录音时间排。
+   * 顺带给每条标上 _no（句子序号，1 起）：素材页的编号和导出的文件名都用它。
+   */
+  function sortClipsByTask(list) {
+    const map = Object.create(null);
+    state.tasks.forEach(function (t, i) { map[t.id] = i; });
+    const BIG = Number.MAX_SAFE_INTEGER;
+    const out = list.slice().sort(function (a, b) {
+      const ia = map[a.taskId] == null ? BIG : map[a.taskId];
+      const ib = map[b.taskId] == null ? BIG : map[b.taskId];
+      if (ia !== ib) return ia - ib;
+      return (a.ts || 0) - (b.ts || 0);
+    });
+    let extra = 0;
+    out.forEach(function (c) {
+      const i = map[c.taskId];
+      c._no = (i == null) ? (state.tasks.length + (++extra)) : (i + 1);
+    });
+    return out;
+  }
+
   function clipFor(taskId) {
     for (let i = 0; i < state.clips.length; i++) {
       if (state.clips[i].taskId === taskId) return state.clips[i];
@@ -628,7 +635,7 @@
     state.showTaskList = false;
     stopPlay();
     return DB.getClips(p.id).then(function (clips) {
-      state.clips = clips;
+      state.clips = sortClipsByTask(clips);
       state.cursor = firstIncomplete();
       go(view || 'record');
       maybeShowRecGuide();
@@ -1007,7 +1014,7 @@
         if (!ok) { closeModal(); return null; }
         const doomed = state.clips.filter(function (c) { return c.taskId === taskId; });
         return Promise.all(doomed.map(function (c) { return DB.deleteClip(c.id); })).then(function () {
-          state.clips = state.clips.filter(function (c) { return c.taskId !== taskId; });
+          state.clips = sortClipsByTask(state.clips.filter(function (c) { return c.taskId !== taskId; }));
           const list = ((state.project && state.project.customTexts) || []).filter(function (x) { return x.id !== entry.id; });
           return DB.updateProject(state.project.id, { customTexts: list }).then(function (upd) {
             if (upd) state.project = upd;
@@ -1051,6 +1058,7 @@
         if (state.clips[i].id === saved.id) { state.clips[i] = saved; replaced = true; break; }
       }
       if (!replaced) state.clips.push(saved);
+      state.clips = sortClipsByTask(state.clips);
 
       URL.revokeObjectURL(pd.url);
       state.pending = null;
@@ -1162,7 +1170,7 @@
       state.clips.forEach(function (c, i) {
         html += '<li class="clip">' +
           '<div class="clip-head">' +
-          '<span class="clip-no">' + pad(i + 1, 3) + '</span>' +
+          '<span class="clip-no">' + pad(c._no || (i + 1), 3) + '</span>' +
           '<span class="clip-dur">' + esc(fmtDuration(c.duration)) + '</span>' +
           '</div>' +
           (c.missing
@@ -1273,7 +1281,7 @@
       T('confirmDel')).then(function (ok) {
         if (!ok) { closeModal(); return; }
         return DB.deleteClip(id).then(function () {
-          state.clips = state.clips.filter(function (x) { return x.id !== id; });
+          state.clips = sortClipsByTask(state.clips.filter(function (x) { return x.id !== id; }));
           closeModal();
           render();
           toast(T('toastDeleted'));
@@ -1329,12 +1337,13 @@
       '<p class="muted small">' + esc(T('exportPurpose', { p: purpose.label })) +
       ' · ' + esc(T('exportLang', { l: langText })) + '</p>' +
       '<ul class="tree">' +
-      '<li><b>wavs/</b> ' + esc(T('wavCount', { n: state.clips.length })) + '</li>' +
+      '<li><b>' + esc(zipRootName(p) + '/') + '</b></li>' +
+      '<li class="sub"><b>wavs/</b> ' + esc(T('wavCount', { n: state.clips.length })) + '</li>' +
       (isArchive ? '' :
-        '<li><b>dataset.list</b> ' + esc(T('datasetDesc')) + '</li>' +
-        '<li><b>references/</b> ' + esc(T('refsDesc', { n: refs.length })) + '</li>' +
-        '<li><b>' + esc(T('nextStepsFile')) + '</b> ' + esc(T('nextStepsDesc')) + '</li>') +
-      '<li><b>project.json</b> ' + esc(T('projectJsonDesc')) + '</li>' +
+        '<li class="sub"><b>dataset.list</b> ' + esc(T('datasetDesc')) + '</li>' +
+        '<li class="sub"><b>references/</b> ' + esc(T('refsDesc', { n: refs.length })) + '</li>' +
+        '<li class="sub"><b>' + esc(T('nextStepsFile')) + '</b> ' + esc(T('nextStepsDesc')) + '</li>') +
+      '<li class="sub"><b>project.json</b> ' + esc(T('projectJsonDesc')) + '</li>' +
       '</ul>' +
       (isArchive
         ? '<p class="muted small">' + esc(T('archiveOnlyNote')) + '</p>'
@@ -1349,13 +1358,13 @@
         '</section>';
     }
 
-    html += '<section class="card">' +
-      (isArchive
-        ? '<button class="btn primary block" data-act="export-audio">' + esc(T('btnExportArchive')) + '</button>' +
-          '<button class="btn ghost block" data-act="export-full">' + esc(T('btnAlsoFull')) + '</button>'
-        : '<button class="btn primary block" data-act="export-full">' + esc(T('btnExportFull')) + '</button>' +
-          '<button class="btn ghost block" data-act="export-audio">' + esc(T('btnAudioOnly')) + '</button>') +
-      '</section>';
+    // 纯存档项目只给「导出音频」：完整训练包要模型名、要标注文件，跟它的用途不符
+    const buttons = isArchive
+      ? '<button class="btn primary block" data-act="export-audio">' + esc(T('btnExportArchive')) + '</button>'
+      : '<button class="btn primary block" data-act="export-full">' + esc(T('btnExportFull')) + '</button>' +
+        '<button class="btn ghost block" data-act="export-audio">' + esc(T('btnAudioOnly')) + '</button>';
+
+    html += '<section class="card">' + buttons + '</section>';
 
     if (!isArchive && refs.length === 0) {
       html += '<section class="card tip-card">' +
@@ -1378,21 +1387,28 @@
   }
 
   /**
-   * 训练包数据最终落地的目录 = 全局基础目录下自动拼一层「VoiceArchive-模型名」。
+   * ZIP 里最外面那一层文件夹的名字，也是电脑上解压后所在的子文件夹名：
+   * 训练项目是「VoiceArchive-模型名」；纯存档项目没有模型名，用「VoiceArchive-日期」。
+   */
+  function zipRootName(p) {
+    if ((p.purpose || 'train') === 'archive') return 'VoiceArchive-' + dateStamp();
+    const id = String(p.speakerId || '').replace(/[^a-zA-Z0-9_]/g, '');
+    return 'VoiceArchive-' + (id || 'speaker');
+  }
+
+  /**
+   * 训练包数据最终落地的目录 = 全局基础目录下自动拼一层 zipRootName(p)。
    * dataset.list 里的绝对路径、以及电脑上解压 ZIP 的位置都以它为准。
-   * archive（纯音频存档）没有 dataset.list，直接用基础目录即可。
    */
   function exportDataDir(p, base) {
-    if ((p.purpose || 'train') === 'archive') return base;
-    const id = String(p.speakerId || '').replace(/[^a-zA-Z0-9_]/g, '') || 'speaker';
-    return base + 'VoiceArchive-' + id + '\\';
+    return base + zipRootName(p) + '\\';
   }
 
   /** 把片段的 Blob 读成字节（ZIP 打包器只吃 Uint8Array） */
   function readClips() {
-    const list = state.clips.slice()
-      .filter(function (c) { return !!c.blob; })
-      .sort(function (a, b) { return a.ts - b.ts; });
+    // 顺序沿用 state.clips（已按句子顺序排好），不再按录音时间重排：
+    // 否则回头补录的那句会被挤到最后一个号
+    const list = state.clips.slice().filter(function (c) { return !!c.blob; });
     return Promise.all(list.map(function (c) {
       return c.blob.arrayBuffer().then(function (buf) {
         return { clip: c, bytes: new Uint8Array(buf) };
@@ -1405,13 +1421,15 @@
     // 训练语种代码：中文方言（zh-dialect）也要导出成 zh，GPT-SoVITS 只认这几个
     const lang = C.trainCode(p.language);
     const base = normalizePath(state.targetPath);
-    const dir = exportDataDir(p, base);
+    const root = zipRootName(p);        // 包里最外面那一层文件夹
+    const dir = base + root + '\\';     // 电脑上解压后所在的目录（dataset.list 里写它）
     const batch = (p.exportCount || 0) + 1;
     const name = T('zipName', { name: p.nickname, n: batch, date: dateStamp() });
 
     const zip = ZIP.create();
-    zip.addFolder('wavs/');
-    if (mode === 'full') zip.addFolder('references/');
+    zip.addFolder(root + '/');
+    zip.addFolder(root + '/wavs/');
+    if (mode === 'full') zip.addFolder(root + '/references/');
 
     const listLines = [];
     const metas = [];
@@ -1419,13 +1437,16 @@
 
     items.forEach(function (item) {
       const c = item.clip;
-      const fname = pad(++audioCount, 4) + '.wav';
-      const wavPath = 'wavs/' + fname;
+      audioCount++;
+      // 文件名 = 句子序号（跟素材页显示的编号一致）：第 10 句永远是 010.wav，
+      // 中间哪句没录，那个号就空着，不会往后串
+      const fname = pad(c._no || audioCount, 3) + '.wav';
+      const wavPath = root + '/wavs/' + fname;
       zip.add(wavPath, item.bytes);
       const text = String(c.text || '').replace(/[\r\n|]+/g, ' ').trim();
       if (mode === 'full') {
         listLines.push(dir + 'wavs\\' + fname + '|' + p.speakerId + '|' + lang + '|' + text);
-        if (c.ref) zip.add('references/' + fname, item.bytes);
+        if (c.ref) zip.add(root + '/references/' + fname, item.bytes);
       }
       metas.push({
         id: c.id, taskId: c.taskId, taskLabel: c.taskLabel, group: c.group,
@@ -1436,12 +1457,12 @@
 
     // 训练相关的文件只在完整包里
     if (mode === 'full') {
-      zip.add('dataset.list', listLines.join('\n') + '\n');
-      zip.add(T('nextStepsFile'), C.nextSteps(I18N.getUiLang()));
+      zip.add(root + '/dataset.list', listLines.join('\n') + '\n');
+      zip.add(root + '/' + T('nextStepsFile'), C.nextSteps(I18N.getUiLang()));
     }
 
     // project.json 两种包都放：它是备份，导回来才能续录
-    zip.add('project.json', JSON.stringify({
+    zip.add(root + '/project.json', JSON.stringify({
       app: C.APP.slug,
       version: C.APP.version,
       exportedAt: Date.now(),
@@ -1614,6 +1635,19 @@
   }
 
   /**
+   * 按 project.json 里记的路径取音频。
+   * 找不到就退回按文件名找（包被重新压过、外面那层文件夹被改过名也能救回来）。
+   */
+  function findAudio(files, zipPath) {
+    if (!zipPath) return null;
+    const bare = zipPath.replace(/^.*\//, '');
+    return ZIP.find(files, zipPath) ||
+      ZIP.find(files, 'wavs/' + bare) ||
+      ZIP.find(files, bare) ||
+      null;
+  }
+
+  /**
    * 优先还原成 32k/16bit/单声道；已经是这个规格的 WAV 直接复用，
    * 其它格式（44.1k 的 wav、m4a、mp3）走一次解码重采样。
    */
@@ -1703,7 +1737,7 @@
 
         const jobs = metas.map(function (m) {
           if (seen[String(m.ts)]) return Promise.resolve(null);
-          const bytes = m.file ? ZIP.find(files, m.file) : null;
+          const bytes = findAudio(files, m.file);
           if (!bytes) {
             // 只导了 project.json（没有音频）：恢复文本，标记缺失，方便对着重录
             return DB.addClip({
@@ -1727,8 +1761,9 @@
         const known = {};
         metas.forEach(function (m) { if (m.file) known[m.file] = true; });
         const baseTs = Date.now();
+        // 兼容两种包：新版带一层 VoiceArchive-xxx 文件夹，老版直接是 wavs/
         files.filter(function (f) {
-          return /^wavs\/[^/]+\.(wav|mp3|m4a|aac|ogg|flac)$/i.test(f.name) && !known[f.name];
+          return /(^|\/)wavs\/[^/]+\.(wav|mp3|m4a|aac|ogg|flac)$/i.test(f.name) && !known[f.name];
         }).forEach(function (f, i) {
           jobs.push(bytesToWav(f.data, f.name).then(function (res) {
             return DB.addClip({
@@ -1949,7 +1984,7 @@
           state.project = p;
           state.tasks = buildProjectTasks(p);
           DB.getClips(p.id).then(function (clips) {
-            state.clips = clips;
+            state.clips = sortClipsByTask(clips);
             go('manage');
           });
         }

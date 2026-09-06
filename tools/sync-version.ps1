@@ -1,6 +1,6 @@
 # ============================================================
 #  sync-version.ps1
-#  Read the version from VERSION (plain x.y.z), then make these
+#  Read the version from VERSION (x.y.z or x.y.z.n), then make these
 #  two files agree with it. Idempotent: re-running with the SAME
 #  VERSION changes nothing.
 #    1) content.js  -> version: '<ver>'
@@ -17,8 +17,9 @@ if (-not (Test-Path $verFile)) {
   exit 1
 }
 $ver = ([IO.File]::ReadAllText($verFile)).Trim()
-if ($ver -notmatch '^\d+\.\d+\.\d+$') {
-  Write-Host ('Invalid version (expected x.y.z): ' + $ver) -ForegroundColor Red
+# 版本号允许 3 段（26.9.6）或 4 段（26.9.6.21，末位是当天发版序号）
+if ($ver -notmatch '^\d+\.\d+\.\d+(\.\d+)?$') {
+  Write-Host ('Invalid version (expected x.y.z or x.y.z.n): ' + $ver) -ForegroundColor Red
   exit 1
 }
 
@@ -33,7 +34,7 @@ $cNeedle = "version: '$ver'"
 if ($cText.Contains($cNeedle)) {
   Write-Host 'content.js  -> already up to date.'
 } else {
-  $cNew = [regex]::Replace($cText, "version: '\d+\.\d+\.\d+'", $cNeedle, 1)
+  $cNew = [regex]::Replace($cText, "version: '\d+\.\d+\.\d+(\.\d+)?'", $cNeedle, 1)
   if ($cNew -ceq $cText) {
     Write-Host 'WARNING: version field not found in content.js, skipped.' -ForegroundColor Yellow
   } else {

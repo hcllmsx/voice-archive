@@ -1044,6 +1044,12 @@ textarea { resize: vertical; }
 
 .tree li:last-child { border-bottom: 0; }
 
+/* 导出页结构树：包里那层文件夹的子项往里缩一点 */
+.tree li.sub {
+  padding-left: 16px;
+  color: var(--muted, inherit);
+}
+
 .tip-card {
   background: var(--amber-soft);
   border-color: transparent;
