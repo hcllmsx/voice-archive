@@ -219,8 +219,9 @@ h1, h2, h3 {
 }
 
 .proj {
-  border: 1px solid var(--line);
-  border-radius: 10px;
+  border: 0;
+  border-top: 1px dashed var(--line);
+  border-bottom: 1px dashed var(--line);
   padding: 12px 14px;
   margin-bottom: 10px;
 }
