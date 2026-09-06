@@ -45,6 +45,7 @@
     lastZip: null,
     showTaskList: false,
     showResume: false,
+    editingProjectId: null,
     _shareFn: null,
     _dlFn: null
   };
@@ -237,6 +238,7 @@
           '<span class="proj-ops">' +
           '<button class="btn small primary" data-act="open" data-id="' + p.id + '">' + esc(T('btnContinue')) + '</button>' +
           '<button class="btn small ghost" data-act="manage" data-id="' + p.id + '">' + esc(T('btnClips')) + '</button>' +
+          '<button class="btn small ghost" data-act="project-settings" data-id="' + p.id + '">' + esc(T('btnProjectSettings')) + '</button>' +
           '</span></div></li>';
       });
       html += '</ul>';
@@ -355,6 +357,137 @@
       return openProject(p);
     }).catch(function (e) {
       toast(T('toastCreateFail', { msg: e.message }));
+    });
+  }
+
+  /* ---------------- 项目设置 ---------------- */
+  /** 打开项目设置：改昵称 / 模型名 / 年龄段 / 语言 / 用途 */
+  function projectSettingsForm(id) {
+    const p = state.projects.filter(function (x) { return x.id === id; })[0] ||
+      (state.project && state.project.id === id ? state.project : null);
+    if (!p) return;
+    state.editingProjectId = p.id;
+
+    const ui = I18N.getUiLang();
+    const groups = C.AGE_GROUPS.map(function (g) {
+      const gl = C.ageGroup(g.id, ui);
+      return '<label class="chip"><input type="radio" name="ageGroup" value="' + g.id + '"' +
+        (g.id === p.ageGroup ? ' checked' : '') + '><span>' +
+        esc(gl.label + '（' + gl.range + '）') + '</span></label>';
+    }).join('');
+    const langs = C.LANGUAGES.map(function (l) {
+      const ll = C.language(l.code, ui);
+      return '<label class="chip"><input type="radio" name="language" value="' + l.code + '"' +
+        (l.code === p.language ? ' checked' : '') + '><span>' + esc(ll.label) + '</span></label>';
+    }).join('');
+    const purposes = C.PURPOSES.map(function (x) {
+      const pl = C.purpose(x.id, ui);
+      return '<label class="chip"><input type="radio" name="purpose" value="' + x.id + '"' +
+        (x.id === (p.purpose || 'train') ? ' checked' : '') + '><span>' + esc(pl.label) + '</span></label>';
+    }).join('');
+
+    openModal(
+      '<h3 class="modal-title">' + esc(T('projectSettingsTitle')) + '</h3>' +
+      '<div class="form">' +
+      '<label class="field"><span>' + esc(T('fNickname')) + '</span>' +
+      '<input type="text" id="f-nickname" value="' + esc(p.nickname) + '" maxlength="20"></label>' +
+      '<div class="field"><span>' + esc(T('fAgeGroup')) + '</span><div class="chips">' + groups + '</div></div>' +
+      '<div class="field"><span>' + esc(T('fLanguage')) + '</span><div class="chips">' + langs + '</div>' +
+      '<p class="muted small" id="lang-hint"></p></div>' +
+      '<label class="field" id="f-dialect-wrap" hidden><span>' + esc(T('fDialect')) + '</span>' +
+      '<input type="text" id="f-dialect" value="' + esc(p.dialect || '') + '" maxlength="20"></label>' +
+      '<div class="field"><span>' + esc(T('fPurpose')) + '</span><div class="chips">' + purposes + '</div>' +
+      '<p class="muted small" id="purpose-hint"></p></div>' +
+      '<label class="field" id="f-speaker-wrap"><span>' + esc(T('fSpeaker')) + '</span>' +
+      '<input type="text" id="f-speaker" value="' + esc(p.speakerId || '') + '" maxlength="24"></label>' +
+      '<p class="muted small">' + esc(T('projectSettingsHint')) + '</p>' +
+      '</div>' +
+      '<div class="modal-actions">' +
+      '<button class="btn ghost" data-act="modal-close">' + esc(T('btnCancel')) + '</button>' +
+      '<button class="btn primary" data-act="save-project-settings">' + esc(T('btnSave')) + '</button>' +
+      '</div>' +
+      '<button type="button" class="btn danger-ghost block" data-act="delete-project">' +
+      esc(T('btnDeleteProject')) + '</button>'
+    );
+    setTimeout(syncProjectForm, 0);
+  }
+
+  /** 删除整个项目及其全部录音（二次确认，确认里会报出有多少段录音） */
+  function deleteProject() {
+    const id = state.editingProjectId;
+    const p = state.projects.filter(function (x) { return x.id === id; })[0] ||
+      (state.project && state.project.id === id ? state.project : null);
+    if (!p) { closeModal(); return; }
+
+    DB.countClips(p.id).then(function (n) {
+      return confirmModal(T('confirmDelProjectTitle'),
+        T('confirmDelProjectBody', { name: esc(p.nickname), n: n }),
+        T('confirmDelProjectOk'));
+    }).then(function (ok) {
+      if (!ok) { closeModal(); return null; }
+      return DB.deleteProject(p.id).then(function () {
+        state.projects = state.projects.filter(function (x) { return x.id !== p.id; });
+        // 删的是当前打开的项目：清干净内存状态并回首页
+        const wasCurrent = !!(state.project && state.project.id === p.id);
+        if (wasCurrent) {
+          stopPlay();
+          state.project = null;
+          state.clips = [];
+          state.tasks = [];
+          state.pending = null;
+          state.cursor = 0;
+        }
+        state.editingProjectId = null;
+        closeModal();
+        toast(T('toastProjectDeleted'));
+        if (wasCurrent) {
+          go('home');
+          return null;
+        }
+        return refreshProjects();
+      });
+    }).catch(function (e) {
+      toast(T('toastSaveFail', { msg: e && e.message ? e.message : '-' }));
+    });
+  }
+
+  function saveProjectSettings() {
+    const id = state.editingProjectId;
+    const p = state.projects.filter(function (x) { return x.id === id; })[0] ||
+      (state.project && state.project.id === id ? state.project : null);
+    if (!p) { closeModal(); return; }
+
+    const nickname = (document.getElementById('f-nickname').value || '').trim();
+    if (!nickname) { toast(T('toastNeedNickname')); return; }
+
+    const speakerRaw = (document.getElementById('f-speaker').value || '').trim();
+    const ageGroup = (document.querySelector('input[name=ageGroup]:checked') || {}).value || p.ageGroup;
+    const language = (document.querySelector('input[name=language]:checked') || {}).value || p.language;
+    const purpose = (document.querySelector('input[name=purpose]:checked') || {}).value || (p.purpose || 'train');
+    const dialectEl = document.getElementById('f-dialect');
+    const dialect = (C.language(language).dialectable && dialectEl)
+      ? (dialectEl.value || '').trim()
+      : '';
+    const speakerId = speakerRaw.replace(/[^a-zA-Z0-9_]/g, '') || p.speakerId;
+
+    DB.updateProject(p.id, {
+      nickname: nickname, speakerId: speakerId, ageGroup: ageGroup,
+      language: language, dialect: dialect, purpose: purpose
+    }).then(function (upd) {
+      state.editingProjectId = null;
+      closeModal();
+      upsertProject(upd);
+      // 改的是当前打开的项目：同步内存里的项目，并按新设置重建任务队列
+      if (state.project && state.project.id === upd.id) {
+        state.project = upd;
+        state.tasks = buildProjectTasks(upd);
+        if (state.cursor >= state.tasks.length) state.cursor = 0;
+      }
+      render();
+      toast(T('toastSaved'));
+      return refreshProjects();
+    }).catch(function (e) {
+      toast(T('toastSaveFail', { msg: e.message }));
     });
   }
 
@@ -1452,6 +1585,9 @@
 
       case 'new-project': newProjectForm(); break;
       case 'create-project': createProject(); break;
+      case 'project-settings': projectSettingsForm(el.getAttribute('data-id')); break;
+      case 'save-project-settings': saveProjectSettings(); break;
+      case 'delete-project': deleteProject(); break;
       case 'open': {
         const id = el.getAttribute('data-id');
         const p = state.projects.filter(function (x) { return x.id === id; })[0];
