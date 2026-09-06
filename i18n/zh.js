@@ -110,6 +110,8 @@
       btnRerecord: '重录',
       btnSaveNext: '保存',
       btnDiscardClip: '放弃本次',
+      trimNote: '开头 {n} 的空白已经自动去掉了',
+      btnKeepOriginal: '保留原样（换回没裁剪的版本）',
       ideaBtn: '看看怎么说',
       toastNoRecHere: '当前环境不能录音，页面上方有原因说明',
       toastMicFail: '打不开麦克风，检查一下浏览器权限',

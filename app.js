@@ -811,9 +811,17 @@
 
   function reviewHTML() {
     const pd = state.pending;
+    // 只在真的裁掉了、且用户还没换回原版时提示一句，免得他纳闷时长怎么短了
+    const trimNote = (pd.trimmed >= 0.3 && !pd.usedRaw)
+      ? '<p class="muted small trim-note">' + esc(T('trimNote', { n: fmtDuration(pd.trimmed) })) + '</p>'
+      : '';
+    const keepRaw = (pd.raw && !pd.usedRaw)
+      ? '<button class="btn ghost block" data-act="use-raw">' + esc(T('btnKeepOriginal')) + '</button>'
+      : '';
     return '<section class="review">' +
       '<p class="review-title">' + esc(T('reviewTitle')) + '</p>' +
       '<audio id="preview" controls preload="auto" src="' + pd.url + '"></audio>' +
+      trimNote + keepRaw +
       '<label class="field"><span>' + esc(T('fClipText')) + '</span>' +
       '<textarea id="clip-text" rows="3" placeholder="' + esc(T('phClipText')) + '">' +
       esc(pd.text || '') + '</textarea></label>' +
@@ -924,7 +932,11 @@
         url: URL.createObjectURL(res.blob),
         duration: res.duration,
         // 自己补充的句子：他输入的文字就是这句要读的内容，直接预填，省得再敲一遍
-        text: (pendingTask && pendingTask.group === 'custom') ? pendingTask.label : ''
+        text: (pendingTask && pendingTask.group === 'custom') ? pendingTask.label : '',
+        // 开头空白自动裁掉了多少秒；真裁了才留一份原版，好在确认页换回来
+        trimmed: res.trimmed || 0,
+        raw: res.rawBlob ? { blob: res.rawBlob, duration: res.rawDuration } : null,
+        usedRaw: false
       };
       render();
       // 进入界面立刻聚焦文本框（不等播放完）：录音人就在现场，当场记录最准。
@@ -950,6 +962,23 @@
     if (state.pending && state.pending.url) URL.revokeObjectURL(state.pending.url);
     state.pending = null;
     render();
+  }
+
+  /** 开头空白被自动裁掉了，但用户想留着原样：换回没裁过的那一版 */
+  function useRawClip() {
+    const pd = state.pending;
+    if (!pd || !pd.raw) return;
+    URL.revokeObjectURL(pd.url);
+    pd.blob = pd.raw.blob;
+    pd.duration = pd.raw.duration;
+    pd.url = URL.createObjectURL(pd.blob);
+    pd.usedRaw = true;
+    render();
+    const audio = document.getElementById('preview');
+    if (audio) {
+      audio.loop = true;
+      audio.play().catch(function () {});
+    }
   }
 
   /* ---------------- 自定义补充句 ---------------- */
@@ -2016,6 +2045,7 @@
       case 'rerecord': rerecord(); break;
       case 'confirm-clip': confirmClip(); break;
       case 'discard-clip': discardClip(); break;
+      case 'use-raw': useRawClip(); break;
       case 'add-custom':
         if (!state.recording && !state.pending && state.countdown <= 0) addCustomForm();
         break;

@@ -162,6 +162,8 @@ console.log('\n[zip round-trip]');
   }).then(function () {
     return testWav();
   }).then(function () {
+    return testTrim();
+  }).then(function () {
     console.log(failed ? '\n' + failed + ' 项失败' : '\n全部通过');
     process.exit(failed ? 1 : 0);
   }).catch(function (e) {
@@ -257,6 +259,41 @@ function testInflate() {
         back && back.length === data.length && back.every((b, i) => b === data[i]));
     });
   });
+}
+
+/* ---------------- 3.5 开头静音裁剪 ---------------- */
+function testTrim() {
+  console.log('\n[trim leading silence]');
+  const rate = VR.TARGET_RATE;
+  const trim = VR.trimLeadingSilence;
+
+  // 前 leadSec 秒全静音，之后是持续的人声
+  function make(leadSec, voiceSec, amp) {
+    const total = Math.round((leadSec + voiceSec) * rate);
+    const a = new Float32Array(total);
+    const at = Math.round(leadSec * rate);
+    for (let i = at; i < total; i++) a[i] = amp * Math.sin(2 * Math.PI * 220 * i / rate);
+    return a;
+  }
+
+  // 1) 1.2 秒空白 + 2 秒人声：裁掉约 1.2 秒（起点往前留 80ms 余量）
+  const r1 = trim(make(1.2, 2, 0.2), rate);
+  check('裁掉约 1.2 秒空白（实测 ' + r1.trimmed.toFixed(2) + 's）', Math.abs(r1.trimmed - 1.12) < 0.1);
+  check('人声段完整保留（约 2 秒）', Math.abs(r1.samples.length / rate - 2.08) < 0.1);
+
+  // 2) 一开口就有声音：不该动
+  check('本来就没有前导空白时不裁', trim(make(0, 2, 0.2), rate).trimmed === 0);
+
+  // 3) 整段静音：不能把整段裁光
+  check('整段静音不裁', trim(new Float32Array(Math.round(2 * rate)), rate).trimmed === 0);
+
+  // 4) 真实一点：手机麦克风有底噪，门槛要能自己抬上去
+  const noisy = make(1.2, 2, 0.2);
+  for (let i = 0; i < noisy.length; i++) noisy[i] += 0.003 * Math.sin(2 * Math.PI * 50 * i / rate);
+  const r4 = trim(noisy, rate);
+  check('有底噪时依然裁得准（实测 ' + r4.trimmed.toFixed(2) + 's）', Math.abs(r4.trimmed - 1.12) < 0.1);
+
+  return Promise.resolve();
 }
 
 /* ---------------- 4. WAV 封装 ---------------- */

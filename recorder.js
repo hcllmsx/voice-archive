@@ -132,6 +132,73 @@ window.VoiceRecorder = (function () {
   }
 
   /* ================================================================== */
+  /* 开头静音裁剪                                                       */
+  /* 按下录音后总要愣一下才开口，前面那段空白留着没用：                  */
+  /* 训练时是纯噪声，当参考音频还会把时长顶到 10 秒以上。                */
+  /* ================================================================== */
+
+  const TRIM_WIN_SEC = 0.02;    // 判定窗口：20ms
+  const TRIM_MIN_CUT = 0.15;    // 少于这么多秒不值得动
+  const TRIM_KEEP_MIN = 0.5;    // 裁完至少还得剩这么多秒
+  const TRIM_PRE_ROLL = 0.08;   // 起点往前留的余量，别把起音咬掉
+  const TRIM_FLOOR = 0.002;     // 绝对地板（约 -54dBFS），低于它一律当静音
+
+  /**
+   * 裁掉开头的静音段。
+   * 门槛是「从这段录音自己身上估出来的」：取 90 百分位当说话音量、开头几窗的中位数当底噪，
+   * 门槛同时高于底噪 3 倍、低于说话音量一截，这样手机底噪大一点小一点都不会误判。
+   * 找到第一个「连续两窗都超门槛」的位置当人声起点（单窗不算，躲开咳嗽、碰麦那种一下的响动）。
+   * @param {Float32Array} input 原始 PCM
+   * @param {number} sampleRate
+   * @returns {{samples: Float32Array, trimmed: number}} trimmed = 裁掉的秒数，0 表示没裁
+   */
+  function trimLeadingSilence(input, sampleRate) {
+    const win = Math.max(1, Math.round(sampleRate * TRIM_WIN_SEC));
+    const n = Math.floor(input.length / win);
+    if (n < 10) return { samples: input, trimmed: 0 };
+
+    // 每个窗口的 RMS
+    const rms = new Float32Array(n);
+    for (let w = 0; w < n; w++) {
+      let sum = 0;
+      const at = w * win;
+      for (let i = 0; i < win; i++) {
+        const v = input[at + i];
+        sum += v * v;
+      }
+      rms[w] = Math.sqrt(sum / win);
+    }
+
+    // 说话音量：90 百分位（比最大值稳，不被个别爆音带跑）
+    const sorted = rms.slice().sort();
+    const speech = sorted[Math.floor(n * 0.9)] || 0;
+    // 整段几乎没声音就别动手了
+    if (speech < TRIM_FLOOR * 2) return { samples: input, trimmed: 0 };
+
+    // 底噪：开头本来就是我们要判定的空白，取前几窗的中位数
+    const headN = Math.min(15, n);
+    const head = rms.slice(0, headN).sort();
+    const noise = head[Math.floor(headN / 2)] || 0;
+
+    const threshold = Math.max(speech * 0.08, noise * 3, TRIM_FLOOR);
+
+    let startWin = -1;
+    for (let w = 0; w < n - 1; w++) {
+      if (rms[w] > threshold && rms[w + 1] > threshold) { startWin = w; break; }
+    }
+    if (startWin <= 0) return { samples: input, trimmed: 0 };
+
+    let start = startWin * win - Math.round(sampleRate * TRIM_PRE_ROLL);
+    if (start < 0) start = 0;
+
+    const trimmed = start / sampleRate;
+    const remain = (input.length - start) / sampleRate;
+    if (trimmed < TRIM_MIN_CUT || remain < TRIM_KEEP_MIN) return { samples: input, trimmed: 0 };
+
+    return { samples: input.slice(start), trimmed: trimmed };
+  }
+
+  /* ================================================================== */
   /* 录音器                                                             */
   /* ================================================================== */
   function Recorder() {
@@ -271,7 +338,15 @@ window.VoiceRecorder = (function () {
     }
     this.chunks = [];
 
-    const result = toWavBlob(merged, this.rate);
+    // 开头发呆留下的空白自动裁掉；原版也留一份，用户在确认页想保留原样还能换回来
+    const cut = trimLeadingSilence(merged, this.rate);
+    const result = toWavBlob(cut.samples, this.rate);
+    result.trimmed = cut.trimmed;
+    if (cut.trimmed > 0) {
+      const raw = toWavBlob(merged, this.rate);
+      result.rawBlob = raw.blob;
+      result.rawDuration = raw.duration;
+    }
     result.elapsed = (Date.now() - this.startedAt) / 1000;
     return Promise.resolve(result);
   };
@@ -396,6 +471,7 @@ window.VoiceRecorder = (function () {
     resample: resample,
     encodeWAV: encodeWAV,
     toWavBlob: toWavBlob,
+    trimLeadingSilence: trimLeadingSilence,
     decodeFile: decodeFile
   };
 })();

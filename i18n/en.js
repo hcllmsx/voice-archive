@@ -110,6 +110,8 @@
       btnRerecord: 'Redo',
       btnSaveNext: 'Save',
       btnDiscardClip: 'Discard take',
+      trimNote: 'Trimmed {n} of silence from the start',
+      btnKeepOriginal: 'Keep the original (unedited take)',
       ideaBtn: 'Give me an idea',
       toastNoRecHere: 'Can\'t record here — see the banner above for why',
       toastMicFail: 'Couldn\'t open the mic — check the browser permission',

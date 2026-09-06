@@ -768,6 +768,12 @@ h1, h2, h3 {
   margin-bottom: 14px;
 }
 
+/* 开头空白被自动裁掉时，试听框下面那句说明 */
+.review .trim-note {
+  margin: -6px 0 12px;
+  text-align: center;
+}
+
 /* ================================================================== */
 /* 表单                                                               */
 /* ================================================================== */
@@ -1047,7 +1053,7 @@ textarea { resize: vertical; }
 /* 导出页结构树：包里那层文件夹的子项往里缩一点 */
 .tree li.sub {
   padding-left: 16px;
-  color: var(--muted, inherit);
+  color: var(--muted);
 }
 
 .tip-card {
