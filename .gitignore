@@ -11,6 +11,8 @@ ehthumbs.db
 *.user
 *.sln.docstates
 
+CLAUDE.md
+
 # ---------------- 临时文件 ----------------
 _temp/
 
