@@ -101,6 +101,19 @@ h1, h2, h3 {
   font-size: 17px;
 }
 
+/* 「查看全部句子」切换卡片：折叠时只有一行按钮、不要整圈外框，展开任务列表时才显示卡片外观 */
+.card.tasks-card {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.card.tasks-card.open {
+  background: var(--surface);
+  border-color: var(--line);
+  box-shadow: var(--shadow);
+}
+
 .row {
   display: flex;
   gap: 10px;
@@ -320,6 +333,22 @@ h1, h2, h3 {
   color: var(--danger);
 }
 
+/* 带细红边的「放弃本次」：介于链接感的 danger-ghost 与实底 danger 之间 */
+.btn.danger-outline {
+  background: transparent;
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.btn.danger-outline:hover {
+  background: rgba(163, 69, 47, 0.07);
+}
+
+/* 试听卡按钮行：「放弃本次」靠右，与主操作「保存，下一句」组成右侧操作组 */
+.review .row .danger-outline {
+  margin-left: auto;
+}
+
 .btn.block {
   display: block;
   width: 100%;
@@ -354,6 +383,8 @@ h1, h2, h3 {
 }
 
 .crumb-title {
+  flex: 1;
+  min-width: 0;
   font-size: 15px;
   color: var(--muted);
   overflow: hidden;
@@ -361,15 +392,30 @@ h1, h2, h3 {
   white-space: nowrap;
 }
 
+/* 面包屑右侧的操作按钮组（如录音页：💡 指引 + 素材） */
+.crumbs-ops {
+  display: flex;
+  gap: 6px;
+  flex: none;
+}
+
+.crumbs-ops .icon-btn {
+  width: 34px;
+  padding: 5px 0;
+}
+
 /* ================================================================== */
 /* 安全状态指示条                                                      */
 /* ================================================================== */
 .safety {
-  font-size: 13px;
+  margin-left: auto;            /* 与进度文字同一行，贴到最右 */
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12.5px;
   border-radius: 999px;
-  padding: 6px 14px;
-  margin-bottom: 14px;
-  display: inline-block;
+  padding: 3px 12px;
+  white-space: nowrap;
 }
 
 .safety.ok {
@@ -380,6 +426,15 @@ h1, h2, h3 {
 .safety.warn {
   background: var(--amber-soft);
   color: #8A6415;
+}
+
+.safety.none {
+  background: var(--surface-2);
+  color: var(--muted);
+}
+
+.safety .safety-ico {
+  font-size: 11px;
 }
 
 /* ================================================================== */
@@ -436,7 +491,14 @@ h1, h2, h3 {
   margin-bottom: 12px;
 }
 
-.progress-head .muted { font-size: 13.5px; }
+.progress-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  row-gap: 6px;
+}
+
+.progress-line .muted { font-size: 13.5px; }
 
 .task-card {
   text-align: center;
@@ -520,8 +582,25 @@ h1, h2, h3 {
 .timer {
   margin: 4px 0 16px;
   font-size: 26px;
+  line-height: 42px;
   font-variant-numeric: tabular-nums;
   color: var(--ink);
+}
+
+/* 录音前倒计时：数字落在计时器同一行（class 叠加），三种状态行高一致，布局不跳 */
+.countdown-num {
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--moss);
+}
+
+.countdown-num.pop {
+  animation: cd-pop 0.32s ease;
+}
+
+@keyframes cd-pop {
+  0%   { transform: scale(1.35); opacity: 0.35; }
+  100% { transform: scale(1);   opacity: 1; }
 }
 
 .rec-btn {
@@ -531,8 +610,8 @@ h1, h2, h3 {
   width: 128px;
   height: 128px;
   border-radius: 50%;
-  background: var(--clay);
-  color: #FFFCF8;
+  background: #CDE2CC;   /* 待录：柔和浅绿（绿=可以开始） */
+  color: var(--moss);
   font-family: inherit;
   font-size: 15px;
   display: inline-flex;
@@ -541,9 +620,11 @@ h1, h2, h3 {
   justify-content: center;
   gap: 6px;
   cursor: pointer;
-  box-shadow: 0 6px 20px rgba(185, 96, 60, 0.28);
+  box-shadow: 0 6px 20px rgba(74, 93, 78, 0.24);
   transition: transform 0.15s ease;
 }
+
+.rec-btn:hover:not(.on) { background: #C3DAC1; }
 
 .rec-btn:active { transform: scale(0.96); }
 
@@ -551,18 +632,20 @@ h1, h2, h3 {
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: #FFFCF8;
+  background: var(--moss);
 }
 
 .rec-btn.on {
-  background: var(--danger);
-  box-shadow: 0 6px 20px rgba(163, 69, 47, 0.3);
+  background: #C43E30;   /* 录音中：鲜红（保持不变） */
+  color: #FFFCF8;
+  box-shadow: 0 6px 20px rgba(196, 62, 48, 0.32);
 }
 
 .rec-btn.on .rec-dot {
   border-radius: 3px;
   width: 20px;
   height: 20px;
+  background: #FFFCF8;   /* 停止方块 */
 }
 
 /* 呼吸式动画：录音中有明确的视觉反馈 */
@@ -574,7 +657,7 @@ h1, h2, h3 {
   bottom: 0;
   left: 0;
   border-radius: 50%;
-  border: 2px solid var(--danger);
+  border: 2px solid #C43E30;
   animation: breathe 2.4s ease-in-out infinite;
 }
 

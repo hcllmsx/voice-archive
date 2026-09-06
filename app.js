@@ -29,6 +29,9 @@
     tasks: [],
     cursor: 0,
     recording: false,
+    recCountdown: 2,      // 录音前倒计时（秒），设置页可改，0=点了就开始
+    countdown: 0,         // 当前倒计时剩余秒数，>0 表示正在倒计时
+    cdTimer: 0,           // 倒计时的 setInterval 句柄
     pending: null,        // { task, blob, url, duration, text }
     recorder: null,
     player: null,
@@ -143,6 +146,11 @@
   /* 路由                                                               */
   /* ================================================================== */
   function go(view) {
+    // 离开录音页时清掉倒计时，避免切走后定时器还在偷偷开麦
+    if (state.countdown) {
+      if (state.cdTimer) { clearInterval(state.cdTimer); state.cdTimer = 0; }
+      state.countdown = 0;
+    }
     state.view = view;
     if (location.hash !== '#/' + view) {
       history.replaceState(null, '', '#/' + view);
@@ -166,6 +174,50 @@
     else if (state.view === 'settings') html = viewSettings();
     else html = viewHome();
     el.innerHTML = html;
+    afterRender();
+  }
+
+  /* 待录 / 倒计时：在波形区中央画一条低透明度细基线，
+     提示用户这块区域会显示声音波形（录制时波形沿此线起伏） */
+  function drawIdleBaseline() {
+    const canvas = document.getElementById('wave');
+    if (!canvas) return;
+    const c2d = canvas.getContext('2d');
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    function paint() {
+      const W = canvas.clientWidth, H = canvas.clientHeight;
+      if (!W || !H) return;
+      canvas.width = Math.floor(W * dpr);
+      canvas.height = Math.floor(H * dpr);
+      c2d.setTransform(dpr, 0, 0, dpr, 0, 0);
+      c2d.clearRect(0, 0, W, H);
+      c2d.strokeStyle = 'rgba(185, 96, 60, 0.30)';
+      c2d.lineWidth = 1.5;
+      c2d.beginPath();
+      c2d.moveTo(0, H / 2);
+      c2d.lineTo(W, H / 2);
+      c2d.stroke();
+    }
+    releaseBaseline();
+    paint();
+    window.addEventListener('resize', paint);
+    state._baselineOff = function () {
+      window.removeEventListener('resize', paint);
+      state._baselineOff = null;
+    };
+  }
+
+  function releaseBaseline() {
+    if (state._baselineOff) { state._baselineOff(); state._baselineOff = null; }
+  }
+
+  /* 每次渲染完统一收尾：只有待在录音页且未在录音（含倒计时）时才画基线 */
+  function afterRender() {
+    if (state.view === 'record' && !state.recording && document.getElementById('wave')) {
+      drawIdleBaseline();
+    } else {
+      releaseBaseline();
+    }
   }
 
   /** 把界面语言同步到 <html lang> 和标题 */
@@ -537,13 +589,72 @@
       state.clips = clips;
       state.cursor = firstIncomplete();
       go('record');
+      maybeShowRecGuide();
     });
+  }
+
+  /**
+   * 录音指引：新建 / 恢复的项目第一次进录音页自动弹一次（每个项目只弹一次），
+   * 之后随时点右上角 💡 再看。recGuideSeen 存进项目记录。
+   */
+  function maybeShowRecGuide() {
+    const p = state.project;
+    if (!p || p.recGuideSeen) return;
+    p.recGuideSeen = true;
+    openRecGuide();
+    DB.updateProject(p.id, { recGuideSeen: true }).catch(function () {});
+  }
+
+  /** 录音指引弹窗：年龄段注意事项 + 建议时长（+ 方言提示） */
+  function openRecGuide() {
+    const p = state.project;
+    if (!p) return;
+    const g = C.ageGroup(p.ageGroup, I18N.getUiLang());
+    const dNote = C.dialectNote(p.dialect, I18N.getUiLang());
+
+    let html = '<h3 class="modal-title">' + esc(T('recGuide')) + '</h3>' +
+      '<p class="modal-text"><b>' + esc(g.label + '（' + g.range + '）') + '</b></p>';
+    if (g.notes && g.notes.length) {
+      html += '<ul class="steps">' + g.notes.map(function (n) {
+        return '<li>' + esc(n) + '</li>';
+      }).join('') + '</ul>';
+    }
+    html += '<p class="modal-text">' + esc(T('suggestedDuration', { d: g.duration })) + '</p>';
+    if (dNote) {
+      html += '<p class="modal-text">' + esc(dNote) + '</p>';
+    }
+    html += '<div class="modal-actions col">' +
+      '<button class="btn primary" data-act="modal-close">' + esc(T('btnGotIt')) + '</button>' +
+      '</div>';
+    openModal(html);
   }
 
   /** 还没有备份的句数 */
   function unbackedCount() {
     const backed = state.project ? (state.project.lastBackupCount || 0) : 0;
     return Math.max(0, state.clips.length - backed);
+  }
+
+  /* 录音页右上角常驻安全标签（与进度文字同行、右对齐）：
+     一句都没录时显示"无数据"；有备份缺口时黄底警告；全部已备份绿底 + 锁标放最后 */
+  function safetySpan() {
+    const unbacked = unbackedCount();
+    let cls = 'ok', text, icon = '';
+    if (!state.clips.length) {
+      cls = 'none';
+      text = T('noData');
+    } else if (unbacked > 0) {
+      cls = 'warn';
+      text = T('unbackedN', { n: unbacked });
+      icon = '⚠️';
+    } else {
+      text = T('backedOk');
+      icon = '🔒';
+    }
+    return '<span class="safety ' + cls + '">' +
+      '<span>' + esc(text) + '</span>' +
+      (icon ? '<span class="safety-ico" aria-hidden="true">' + icon + '</span>' : '') +
+      '</span>';
   }
 
   function viewRecord() {
@@ -553,34 +664,23 @@
     const task = state.tasks[state.cursor];
     const total = state.tasks.length;
     const done = doneCount();
-    const unbacked = unbackedCount();
 
     let html = '<nav class="crumbs">' +
       '<button class="btn tiny ghost" data-act="go-home">' + esc(T('crumbProjects')) + '</button>' +
       '<span class="crumb-title">' + esc(p.nickname) + '</span>' +
+      '<span class="crumbs-ops">' +
+      '<button type="button" class="btn tiny ghost icon-btn" data-act="rec-guide" ' +
+      'title="' + esc(T('recGuide')) + '" aria-label="' + esc(T('recGuide')) + '">💡</button>' +
       '<button class="btn tiny ghost" data-act="go-manage">' + esc(T('btnClips')) + '</button>' +
+      '</span>' +
       '</nav>';
 
-    // 常驻安全状态指示条：持续可见，但不弹窗打断
-    html += '<div class="safety ' + (unbacked > 0 ? 'warn' : 'ok') + '">' +
-      (unbacked > 0
-        ? esc(T('unbackedN', { n: unbacked }))
-        : esc(T('backedOk'))) +
-      '</div>';
-
-    html += '<section class="note ' + (g.highlight ? 'strong' : '') + '">' +
-      '<h3>' + esc(g.label + '（' + g.range + '）') + ' · ' + esc(T('notesTitle')) + '</h3>' +
-      '<ul>' + g.notes.map(function (n) { return '<li>' + esc(n) + '</li>'; }).join('') + '</ul>' +
-      '<p class="note-dur">' + esc(T('suggestedDuration', { d: g.duration })) + '</p>' +
-      '</section>';
-
-    const dNote = C.dialectNote(p.dialect, I18N.getUiLang());
-    if (dNote) {
-      html += '<section class="note"><p class="dialect-note">' + esc(dNote) + '</p></section>';
-    }
-
+    // 常驻安全状态标签：与进度文字同一行，右对齐
     html += '<section class="progress-head">' +
+      '<div class="progress-line">' +
       '<span class="muted">' + esc(T('progressN', { cur: state.cursor + 1, total: total, done: done })) + '</span>' +
+      safetySpan() +
+      '</div>' +
       '<div class="bar thin"><i style="width:' + (total ? Math.round(done / total * 100) : 0) + '%"></i></div>' +
       '</section>';
 
@@ -609,7 +709,7 @@
       html += recorderHTML();
     }
 
-    html += '<section class="card">' +
+    html += '<section class="card tasks-card' + (state.showTaskList ? ' open' : '') + '">' +
       '<button class="btn ghost block" data-act="toggle-tasks">' +
       esc(state.showTaskList
         ? T('hideAllLines')
@@ -634,18 +734,21 @@
   }
 
   function recorderHTML() {
+    const cd = state.countdown > 0;
+    // 待录 / 倒计时 / 录音中三种状态共用同一套盒子（波形画布、电平条、计时器行），
+    // 只切换文字与数字，切换状态时高度不变，页面不跳
     return '<section class="recorder">' +
       '<canvas id="wave" class="wave"></canvas>' +
       '<div class="level">' +
-      '<div class="level-bar"><i id="level-fill"></i><span class="zone"></span></div>' +
-      '<p class="level-text" id="level-text">' + esc(T('levelStart')) + '</p>' +
+      '<div class="level-bar"><i id="level-fill"' + (cd ? ' style="width:100%"' : '') + '></i><span class="zone"></span></div>' +
+      '<p class="level-text" id="level-text">' + esc(cd ? T('cdLevelText') : T('levelStart')) + '</p>' +
       '</div>' +
-      '<p class="timer" id="timer">0:00</p>' +
+      '<p class="timer' + (cd ? ' countdown-num' : '') + '" id="timer">' + (cd ? state.countdown : '0:00') + '</p>' +
       '<button class="rec-btn' + (state.recording ? ' on' : '') + '" data-act="toggle-rec">' +
       '<span class="rec-dot"></span>' +
-      '<span class="rec-label">' + esc(state.recording ? T('btnStop') : T('btnStartRec')) + '</span>' +
+      '<span class="rec-label">' + esc(state.recording ? T('btnStop') : (cd ? T('btnCancelCd') : T('btnStartRec'))) + '</span>' +
       '</button>' +
-      '<p class="hint">' + esc(state.recording ? T('recWarning') : T('hintIdle')) + '</p>' +
+      '<p class="hint">' + esc(state.recording ? T('recWarning') : (cd ? T('cdTip') : T('hintIdle'))) + '</p>' +
       '</section>';
   }
 
@@ -660,6 +763,7 @@
       '<div class="row">' +
       '<button class="btn ghost" data-act="rerecord">' + esc(T('btnRerecord')) + '</button>' +
       '<button class="btn primary" data-act="confirm-clip">' + esc(T('btnSaveNext')) + '</button>' +
+      '<button class="btn danger-outline" data-act="discard-clip">' + esc(T('btnDiscardClip')) + '</button>' +
       '</div>' +
       '</section>';
   }
@@ -671,8 +775,59 @@
   }
 
   function toggleRecord() {
-    if (state.recording) stopRecord();
-    else startRecord();
+    if (state.recording) { stopRecord(); return; }
+    if (state.countdown > 0) { cancelCountdown(); return; }
+    beginCountdown();
+  }
+
+  /** 按下「开始录音」：先倒计时，倒数结束才真正收音 */
+  function beginCountdown() {
+    if (!VR.supported()) {
+      toast(T('toastNoRecHere'));
+      return;
+    }
+    if (state.recording || state.countdown > 0) return;
+    if (state.recCountdown <= 0) { startRecord(); return; }
+    state.countdown = state.recCountdown;
+    state.cdTimer = setInterval(countdownTick, 1000);
+    render();
+    popCountdown();
+  }
+
+  function countdownTick() {
+    if (state.countdown > 0) state.countdown--;
+    if (state.countdown > 0) {
+      const el = document.getElementById('timer');
+      if (el) el.textContent = state.countdown;
+      // 电平条当作剩余进度用：宽一点 → 离开始越近
+      const fill = document.getElementById('level-fill');
+      if (fill && state.recCountdown > 0) {
+        fill.style.width = Math.round(state.countdown / state.recCountdown * 100) + '%';
+      }
+      popCountdown();
+    } else {
+      clearCountdown();
+      startRecord();
+    }
+  }
+
+  function clearCountdown() {
+    if (state.cdTimer) { clearInterval(state.cdTimer); state.cdTimer = 0; }
+    state.countdown = 0;
+  }
+
+  /** 倒计时中再点一次按钮：取消，回到待录状态 */
+  function cancelCountdown() {
+    clearCountdown();
+    render();
+  }
+
+  function popCountdown() {
+    const el = document.getElementById('timer');
+    if (!el) return;
+    el.classList.remove('pop');
+    void el.offsetWidth;      // 强制 reflow，让弹跳动画每次都能重放
+    el.classList.add('pop');
   }
 
   function startRecord() {
@@ -723,7 +878,13 @@
     if (state.pending && state.pending.url) URL.revokeObjectURL(state.pending.url);
     state.pending = null;
     render();
-    startRecord();
+    beginCountdown();
+  }
+
+  function discardClip() {
+    if (state.pending && state.pending.url) URL.revokeObjectURL(state.pending.url);
+    state.pending = null;
+    render();
   }
 
   function confirmClip() {
@@ -1021,7 +1182,7 @@
       state.cursor = idx;
       state.pending = null;
       go('record');
-      setTimeout(startRecord, 80);
+      setTimeout(beginCountdown, 80);
     } else {
       toast(T('toastImportedClip'));
     }
@@ -1454,6 +1615,18 @@
       '</section>';
 
     html += '<section class="card">' +
+      '<h2>' + esc(T('cdSettingTitle')) + '</h2>' +
+      '<p class="muted small">' + esc(T('cdSettingHint')) + '</p>' +
+      '<div class="chips">' +
+      [0, 1, 2, 3, 5].map(function (n) {
+        const label = n === 0 ? T('cdOff') : T('cdSec', { n: n });
+        return '<label class="chip"><input type="radio" name="recCountdown" value="' + n + '"' +
+          (state.recCountdown === n ? ' checked' : '') + '><span>' + esc(label) + '</span></label>';
+      }).join('') +
+      '</div>' +
+      '</section>';
+
+    html += '<section class="card">' +
       '<h2>' + esc(T('secPrivacy')) + '</h2>' +
       '<p class="muted">' + esc(T('privacyLong')) + '</p>' +
       '</section>';
@@ -1507,7 +1680,10 @@
           state.lastZip = null;
           state.installDismissed = false;
           state.privacyDismissed = false;
-          try { localStorage.removeItem('va-ui-lang'); } catch (e) { /* 忽略 */ }
+          try {
+            localStorage.removeItem('va-ui-lang');
+            localStorage.removeItem('va-rec-countdown');
+          } catch (e) { /* 忽略 */ }
           closeModal();
           toast(T('toastCleared'));
           // 留一拍让 toast 显示出来，再回到初始状态
@@ -1592,6 +1768,7 @@
         }
         break;
       case 'go-record': go('record'); break;
+      case 'rec-guide': openRecGuide(); break;
       case 'go-manage': go('manage'); break;
       case 'go-export': go('export'); break;
       case 'go-settings': go('settings'); break;
@@ -1628,9 +1805,15 @@
       case 'toggle-rec': toggleRecord(); break;
       case 'rerecord': rerecord(); break;
       case 'confirm-clip': confirmClip(); break;
+      case 'discard-clip': discardClip(); break;
       case 'toggle-tasks': state.showTaskList = !state.showTaskList; render(); break;
       case 'toggle-resume': state.showResume = !state.showResume; render(); break;
-      case 'jump': state.pending = null; state.cursor = parseInt(el.getAttribute('data-i'), 10); render(); break;
+      case 'jump':
+        if (state.countdown) clearCountdown();
+        state.pending = null;
+        state.cursor = parseInt(el.getAttribute('data-i'), 10);
+        render();
+        break;
 
       case 'play': playClip(el.getAttribute('data-id')); break;
       case 'edit-clip': editClip(el.getAttribute('data-id')); break;
@@ -1691,6 +1874,15 @@
         return;
       }
 
+      // 设置页：录音倒计时秒数（0=点了就开始），立即保存并刷新选中态
+      if (el.type === 'radio' && el.name === 'recCountdown') {
+        const v = parseInt(el.value, 10);
+        state.recCountdown = isNaN(v) ? 0 : Math.min(5, Math.max(0, v));
+        try { localStorage.setItem('va-rec-countdown', String(state.recCountdown)); } catch (e) { /* 忽略 */ }
+        render();
+        return;
+      }
+
       // 新建项目表单：语言 / 用途 切换时联动
       if (el.type === 'radio' && (el.name === 'language' || el.name === 'purpose')) {
         syncProjectForm();
@@ -1699,9 +1891,16 @@
 
     // 切到后台：iOS 会挂起音频上下文，自动收尾，别让已录内容丢掉
     document.addEventListener('visibilitychange', function () {
-      if (document.hidden && state.recording) {
-        stopRecord();
-        toast(T('bgStopped'));
+      if (document.hidden) {
+        // 切到后台：倒计时还没开始就先取消，避免在后台偷偷开麦
+        if (state.countdown) {
+          clearCountdown();
+          render();
+        }
+        if (state.recording) {
+          stopRecord();
+          toast(T('bgStopped'));
+        }
       }
     });
 
@@ -1818,7 +2017,7 @@
       row = { id: p.id, clipCount: 0, duration: 0 };
       state.projects.unshift(row);
     }
-    ['nickname', 'speakerId', 'ageGroup', 'language', 'dialect', 'purpose',
+    ['nickname', 'speakerId', 'ageGroup', 'language', 'dialect', 'purpose', 'recGuideSeen',
       'createdAt', 'updatedAt', 'exportCount', 'lastBackupCount', 'targetPath']
       .forEach(function (k) {
         if (p[k] !== undefined) row[k] = p[k];
@@ -1841,8 +2040,18 @@
     });
   }
 
+  /** 读取录音倒计时设置（localStorage，非法值回退默认 2 秒） */
+  function readRecCountdown() {
+    try {
+      const v = parseInt(localStorage.getItem('va-rec-countdown'), 10);
+      if (!isNaN(v)) return Math.min(5, Math.max(0, v));
+    } catch (e) { /* 忽略 */ }
+    return 2;
+  }
+
   function init() {
     state.standalone = detectStandalone();
+    state.recCountdown = readRecCountdown();
     applyDocLang();
     bindEvents();
 

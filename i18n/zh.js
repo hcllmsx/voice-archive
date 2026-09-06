@@ -21,6 +21,10 @@
       appTitle: '声音留档',
       langTitle: '界面语言',
       langHint: '只切换界面文字。录音引导问题使用项目里选的「主要语言」。',
+      cdSettingTitle: '录音倒计时',
+      cdSettingHint: '点「开始录音」后等几秒再真正收音，给说话的人留出准备时间',
+      cdOff: '不等待，点了就开始',
+      cdSec: '{n} 秒',
 
       /* 首页 */
       heroLede: '把重要的人真实的声音，一句一句留下来。<br>不是标准台词，是他平时说话的样子。',
@@ -63,8 +67,10 @@
 
       /* 录音页 */
       crumbProjects: '‹ 项目',
-      unbackedN: '⚠️ 有 {n} 句还没备份',
-      backedOk: '🔒 已备份',
+      recGuide: '录音指引',
+      unbackedN: '有 {n} 句还没备份',
+      backedOk: '已备份',
+      noData: '无数据',
       notesTitle: '注意',
       suggestedDuration: '建议时长：{d}',
       progressN: '第 {cur} / {total} 句 · 已完成 {done} 句',
@@ -78,6 +84,9 @@
       levelStart: '点下面的按钮开始',
       btnStop: '停止',
       btnStartRec: '开始录音',
+      btnCancelCd: '取消',
+      cdTip: '倒计时中，再点一下可取消',
+      cdLevelText: '准备开始…',
       hintIdle: '录完会自动播放，你当场把这句话敲下来',
       recWarning: '请不要锁屏或切走，切到后台录音会中断',
       reviewTitle: '听一下刚才那句',
@@ -85,6 +94,7 @@
       phClipText: '一个字不差地写下来',
       btnRerecord: '重录',
       btnSaveNext: '保存，下一句',
+      btnDiscardClip: '放弃本次',
       toastNoRecHere: '当前环境不能录音，页面上方有原因说明',
       toastMicFail: '打不开麦克风，检查一下浏览器权限',
       micPrepFail: '当前环境不能调用麦克风：请确认网址是 https://，并用系统浏览器（Chrome / Edge / Safari）打开',

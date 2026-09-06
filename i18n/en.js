@@ -21,6 +21,10 @@
       appTitle: 'Voice Archive',
       langTitle: 'Interface language',
       langHint: 'Switches the interface only. Recording prompts follow the project\'s main language.',
+      cdSettingTitle: 'Recording countdown',
+      cdSettingHint: 'Waits a few seconds after tapping Start before actually recording — lets the speaker get ready',
+      cdOff: 'None — start right away',
+      cdSec: '{n}s',
 
       /* 首页 */
       heroLede: 'Preserve the real voice of someone you love, line by line.<br>Not rehearsed lines — the way they actually talk.',
@@ -63,8 +67,10 @@
 
       /* 录音页 */
       crumbProjects: '‹ Projects',
-      unbackedN: '⚠️ {n} clip(s) not backed up',
-      backedOk: '🔒 Backed up',
+      recGuide: 'Recording tips',
+      unbackedN: '{n} clip(s) not backed up',
+      backedOk: 'Backed up',
+      noData: 'No data yet',
       notesTitle: 'Notes',
       suggestedDuration: 'Suggested duration: {d}',
       progressN: 'Clip {cur} / {total} · {done} done',
@@ -78,6 +84,9 @@
       levelStart: 'Tap the button below to start',
       btnStop: 'Stop',
       btnStartRec: 'Start recording',
+      btnCancelCd: 'Cancel',
+      cdTip: 'Counting down — tap again to cancel',
+      cdLevelText: 'Get ready…',
       hintIdle: 'It plays back automatically — type down what was said',
       recWarning: 'Don\'t lock the screen or switch apps — recording stops in the background',
       reviewTitle: 'Listen to that take',
@@ -85,6 +94,7 @@
       phClipText: 'Write it down word for word',
       btnRerecord: 'Redo',
       btnSaveNext: 'Save, next one',
+      btnDiscardClip: 'Discard take',
       toastNoRecHere: 'Can\'t record here — see the banner above for why',
       toastMicFail: 'Couldn\'t open the mic — check the browser permission',
       micPrepFail: 'Microphone unavailable here: make sure the address is https:// and open it in a system browser (Chrome / Edge / Safari)',
