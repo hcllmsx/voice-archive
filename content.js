@@ -64,16 +64,15 @@ window.Content = (function () {
   /* ------------------------------------------------------------------ */
   /* 年龄段 · 结构/元数据                                                */
   /* highlight = true 的年龄段，录音页顶部横幅用醒目样式                  */
-  /* kid       = true 启用游戏化（收集贴纸 + 鼓励动画）                   */
   /* label / range / duration / notes / questions 在语言包 guide.ageGroups */
   /* ------------------------------------------------------------------ */
   const AGE_GROUPS = [
-    { id: 'toddler', highlight: true, kid: true },
-    { id: 'child', highlight: false, kid: true },
-    { id: 'teen', highlight: true, kid: false },
-    { id: 'youngAdult', highlight: false, kid: false },
-    { id: 'midlife', highlight: false, kid: false },
-    { id: 'elder', highlight: true, kid: false }
+    { id: 'toddler', highlight: true },
+    { id: 'child', highlight: false },
+    { id: 'teen', highlight: true },
+    { id: 'youngAdult', highlight: false },
+    { id: 'midlife', highlight: false },
+    { id: 'elder', highlight: true }
   ];
 
   /** 默认年龄段（新建项目 / 数据缺失时兜底），取青年成年组 */

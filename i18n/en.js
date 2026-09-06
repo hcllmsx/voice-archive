@@ -105,7 +105,6 @@
       levelCloser: 'Move closer',
       levelFarther: 'Move farther',
       levelGood: 'Perfect level',
-      stickerHint: 'One sticker unlocked every 5 clips — {n} collected',
 
       /* 素材页 */
       crumbRecord: '‹ Record',
@@ -113,6 +112,7 @@
       crumbExport: 'Export ›',
       statLine: '<b>{n}</b> clips · <b>{total}</b> in total',
       statHint: '1 minute is the bare minimum; 5+ minutes is much better',
+      statRefHint: 'The ☆ star in each item: mark that clip as the reference audio — when you synthesize new speech later, its voice is used as the timbre reference. Tap again to unmark.',
       noClips: 'No clips yet.',
       importedAudio: 'Imported audio',
       clipMissing: 'Audio missing — needs re-recording',
@@ -155,8 +155,8 @@
       btnExportArchive: 'Export audio archive',
       btnAlsoFull: 'Also export a training pack',
       btnExportFull: 'Export full training pack',
-      btnAudioOnly: 'Audio only (for advanced users)',
-      noRefTip: 'No reference audio yet. Go to “Clips”, pick a few natural 3–10 second takes and tap “Set as reference” — it noticeably improves training results.',
+      btnAudioOnly: 'Audio only',
+      noRefTip: 'No reference audio yet. Go to “Clips”, pick a few natural 3–10 second takes and tap “Set as reference” — it becomes the timbre reference when you synthesize new speech.',
       lastZip: 'Just generated: {name}',
       btnShareAgain: 'Share / download again',
       toastNothingToExport: 'Nothing to export yet',
@@ -166,10 +166,13 @@
       zipName: 'VoiceArchive-{name}-batch{n}-{date}.zip',
       nextStepsFile: 'NEXT-STEPS.html',
       packedTitle: 'All packed',
-      packedTip: 'Tip: share it to WeChat “File Transfer” and grab it on your computer directly.',
-      btnShare: 'Share (WeChat / Notes)',
+      packedTip: 'You’ll be asked where to save it next. If no file picker appears, it will go to the system Downloads folder.',
       btnDownload: 'Download to phone',
-      shareTitle: 'Voice Archive backup',
+      zipTypeDesc: 'ZIP archive',
+      zipSavedOkTitle: 'Saved',
+      zipSavedOkMsg: '“{name}” has been saved to the location you picked.',
+      zipSavedDefaultTitle: 'Saving started',
+      zipSavedDefaultMsg: '“{name}” will be saved to the system Downloads folder (the “Downloads” / “Recents” area in your files app).',
       toastDownloadStarted: 'Download started',
 
       /* 导入 */

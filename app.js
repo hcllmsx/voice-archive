@@ -52,7 +52,6 @@
     /* 「看看怎么说」示例开关：用户打开后跨句保持，直到再次点击关闭 */
     showIdeas: false,
     editingProjectId: null,
-    _shareFn: null,
     _dlFn: null
   };
 
@@ -705,7 +704,7 @@
       '<div class="bar thin"><i style="width:' + (total ? Math.round(done / total * 100) : 0) + '%"></i></div>' +
       '</section>';
 
-    html += '<section class="task-card">' +
+    html += '<section class="task-card' + (state.recording ? ' rec' : '') + '">' +
       '<div class="task-head">' +
       '<p class="task-group">' + esc(task.groupTitle) + '</p>' +
       (task.idea
@@ -717,10 +716,6 @@
       (task.tip ? '<p class="task-tip"' + (state.showIdeas && task.idea ? ' hidden' : '') + '>' + esc(task.tip) + '</p>' : '') +
       (task.idea ? '<p class="task-idea"' + (state.showIdeas ? '' : ' hidden') + '>' + esc(task.idea) + '</p>' : '') +
       '</section>';
-
-    if (g.kid && done > 0) {
-      html += '<section class="card kid-progress">' + stickerRow(done) + '</section>';
-    }
 
     if (done >= total && !state.pending) {
       const secs = state.clips.reduce(function (s, c) { return s + (c.duration || 0); }, 0);
@@ -954,8 +949,6 @@
       state.pending = null;
       state.sinceBackup++;
 
-      if (C.ageGroup(state.project.ageGroup).kid) celebrate();
-
       const next = nextIncompleteFrom(state.cursor + 1);
       if (next != null) state.cursor = next;
 
@@ -1034,35 +1027,6 @@
     if (state._resizeOff) { state._resizeOff(); state._resizeOff = null; }
   }
 
-  /* ---------------- 儿童项目的游戏化 ---------------- */
-  function celebrate() {
-    const wrap = document.createElement('div');
-    wrap.className = 'confetti';
-    const colors = ['#C89B3C', '#B9603C', '#4A5D4E', '#8FA37E', '#D9A05B'];
-    for (let i = 0; i < 18; i++) {
-      const bit = document.createElement('i');
-      bit.style.left = (Math.random() * 100) + '%';
-      bit.style.background = colors[i % colors.length];
-      bit.style.animationDelay = (Math.random() * 0.25) + 's';
-      bit.style.transform = 'rotate(' + (Math.random() * 360) + 'deg)';
-      wrap.appendChild(bit);
-    }
-    document.body.appendChild(wrap);
-    setTimeout(function () { if (wrap.parentNode) wrap.parentNode.removeChild(wrap); }, 1700);
-  }
-
-  function stickerRow(done) {
-    const shapes = ['★', '❋', '✿', '☾', '✦', '❤'];
-    const unlocked = Math.min(6, Math.floor(done / 5));
-    let html = '<div class="stickers">';
-    for (let i = 0; i < 6; i++) {
-      html += '<span class="sticker' + (i < unlocked ? ' on' : '') + '">' + shapes[i] + '</span>';
-    }
-    html += '</div>';
-    html += '<p class="muted center small">' + esc(T('stickerHint', { n: unlocked })) + '</p>';
-    return html;
-  }
-
   /* ================================================================== */
   /* 页面 3：素材管理                                                    */
   /* ================================================================== */
@@ -1080,10 +1044,11 @@
 
     html += '<section class="card stat">' +
       '<p>' + T('statLine', { n: state.clips.length, total: esc(fmtTotal(total)) }) + '</p>' +
-      '<p class="muted small">' + esc(T('statHint')) + '</p>' +
+      '<ul class="stat-notes">' +
+      '<li>' + esc(T('statHint')) + '</li>' +
+      '<li>' + esc(T('statRefHint')) + '</li>' +
+      '</ul>' +
       '</section>';
-
-    if (g.kid) html += '<section class="card">' + stickerRow(state.clips.length) + '</section>';
 
     if (!state.clips.length) {
       html += '<section class="card"><p class="muted empty">' + esc(T('noClips')) + '</p></section>';
@@ -1093,20 +1058,30 @@
         html += '<li class="clip">' +
           '<div class="clip-head">' +
           '<span class="clip-no">' + pad(i + 1, 3) + '</span>' +
-          '<span class="clip-label">' + esc(c.taskLabel || T('importedAudio')) + '</span>' +
           '<span class="clip-dur">' + esc(fmtDuration(c.duration)) + '</span>' +
           '</div>' +
           (c.missing
             ? '<p class="clip-text warn-text">' + esc(T('clipMissing')) + '</p>'
             : '<p class="clip-text">' + (c.text ? esc(c.text) : '<i class="muted">' + esc(T('noTextYet')) + '</i>') + '</p>') +
+          '<p class="clip-label">' + esc(c.taskLabel || T('importedAudio')) + '</p>' +
           '<div class="clip-ops">' +
+          '<span class="ops-left">' +
           '<button class="btn tiny ghost" data-act="play" data-id="' + c.id + '">' +
           esc(state.playingId === c.id ? T('btnStop') : T('btnPlay')) + '</button>' +
           '<button class="btn tiny ghost" data-act="rerecord-clip" data-id="' + c.id + '">' + esc(T('btnRerecord')) + '</button>' +
           '<button class="btn tiny ghost" data-act="edit-clip" data-id="' + c.id + '">' + esc(T('btnEditText')) + '</button>' +
-          '<button class="btn tiny ' + (c.ref ? 'primary' : 'ghost') + '" data-act="toggle-ref" data-id="' + c.id + '">' +
-          esc(c.ref ? T('btnIsRef') : T('btnSetRef')) + '</button>' +
-          '<button class="btn tiny danger-ghost" data-act="del-clip" data-id="' + c.id + '">' + esc(T('btnDelete')) + '</button>' +
+          '</span>' +
+          '<span class="ops-right">' +
+          '<button type="button" class="btn tiny icon-only' + (c.ref ? ' is-on' : '') + '" data-act="toggle-ref" data-id="' + c.id + '" ' +
+          'title="' + esc(c.ref ? T('btnIsRef') : T('btnSetRef')) + '" aria-label="' + esc(c.ref ? T('btnIsRef') : T('btnSetRef')) + '">' +
+          '<span aria-hidden="true">' + (c.ref ? '\u2605' : '\u2606') + '</span></button>' +
+          '<button type="button" class="btn tiny icon-only icon-del" data-act="del-clip" data-id="' + c.id + '" ' +
+          'title="' + esc(T('btnDelete')) + '" aria-label="' + esc(T('btnDelete')) + '">' +
+          '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+          '<path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/>' +
+          '<path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>' +
+          '</button>' +
+          '</span>' +
           '</div></li>';
       });
       html += '</ul>';
@@ -1237,6 +1212,13 @@
       '<button class="btn tiny ghost" data-act="go-home">' + esc(T('crumbProjectsPlain')) + '</button>' +
       '</nav>';
 
+    if (state.lastZip) {
+      html += '<section class="card">' +
+        '<p class="muted small">' + esc(T('lastZip', { name: state.lastZip.name })) + '</p>' +
+        '<button class="btn ghost block" data-act="share-again">' + esc(T('btnShareAgain')) + '</button>' +
+        '</section>';
+    }
+
     html += '<section class="card">' +
       '<h2>' + esc(isArchive ? T('exportArchiveTitle') : T('exportFullTitle')) + '</h2>' +
       '<p class="muted small">' + esc(T('exportPurpose', { p: purpose.label })) +
@@ -1273,13 +1255,6 @@
     if (!isArchive && refs.length === 0) {
       html += '<section class="card tip-card">' +
         '<p>' + esc(T('noRefTip')) + '</p></section>';
-    }
-
-    if (state.lastZip) {
-      html += '<section class="card">' +
-        '<p class="muted small">' + esc(T('lastZip', { name: state.lastZip.name })) + '</p>' +
-        '<button class="btn ghost block" data-act="share-again">' + esc(T('btnShareAgain')) + '</button>' +
-        '</section>';
     }
 
     html += footerHTML();
@@ -1416,27 +1391,15 @@
   }
 
   function presentZip(blob, name) {
+    // 桌面上（无法系统分享时）保持原行为：直接弹出下载窗口。
+    // 手机等支持原生分享的环境：弹「打包好了」时只给一个「下载到手机」入口，
+    // 不再提供「分享到微信/备忘录」——那在实际手机上表现就是一次普通下载。
     let file = null;
     try {
       file = new File([blob], name, { type: 'application/zip' });
     } catch (e) { file = null; }
     const canShare = !!(navigator.canShare && file && navigator.canShare({ files: [file] }));
-
-    state._shareFn = function () {
-      if (!canShare) { downloadZip(blob, name); return; }
-      navigator.share({
-        files: [file],
-        title: T('shareTitle'),
-        text: T('appTitle') + ' · ' + name
-      }).then(function () {
-        closeModal();
-        toast(T('toastSaved'));
-      }).catch(function (err) {
-        if (err && err.name === 'AbortError') return;
-        downloadZip(blob, name);
-      });
-    };
-    state._dlFn = function () { downloadZip(blob, name); };
+    state._dlFn = function () { saveZip(blob, name); };
 
     if (canShare) {
       openModal(
@@ -1444,13 +1407,66 @@
         '<p class="modal-text">' + esc(name) + '</p>' +
         '<p class="modal-text muted">' + esc(T('packedTip')) + '</p>' +
         '<div class="modal-actions col">' +
-        '<button class="btn primary" data-act="do-share">' + esc(T('btnShare')) + '</button>' +
-        '<button class="btn ghost" data-act="do-download">' + esc(T('btnDownload')) + '</button>' +
+        '<button class="btn primary block" data-act="do-download">' + esc(T('btnDownload')) + '</button>' +
         '</div>'
       );
     } else {
       downloadZip(blob, name);
     }
+  }
+
+  /** 结果弹窗：告知文件被存到了哪里（普通弹窗，不是底部 toast） */
+  function zipDoneModal(titleKey, msgKey, name) {
+    openModal(
+      '<h3 class="modal-title">' + esc(T(titleKey)) + '</h3>' +
+      '<p class="modal-text">' + esc(T(msgKey, { name: name })) + '</p>' +
+      '<div class="modal-actions">' +
+      '<button class="btn primary" data-act="modal-close">' + esc(T('btnGotIt')) + '</button>' +
+      '</div>'
+    );
+  }
+
+  /**
+   * 手机端保存 ZIP：
+   * 1) 优先拉起系统的文件保存框（showSaveFilePicker），让用户自己选目录；
+   *    写完后弹窗告知「已保存到所选位置」。
+   * 2) 弹不出保存框（如 iOS Safari）时退化为普通下载，存进系统下载文件夹，
+   *    随后用弹窗（而非 toast）告知文件会出现在哪里。
+   */
+  function saveZip(blob, name) {
+    closeModal();
+
+    function saveToDefault() {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = name;
+      a.rel = 'noopener';
+      document.body.appendChild(a);
+      a.click();
+      a.parentNode.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(url); }, 5000);
+      zipDoneModal('zipSavedDefaultTitle', 'zipSavedDefaultMsg', name);
+    }
+
+    if (window.showSaveFilePicker) {
+      window.showSaveFilePicker({
+        suggestedName: name,
+        types: [{ description: T('zipTypeDesc'), accept: { 'application/zip': ['.zip'] } }]
+      }).then(function (handle) {
+        return handle.createWritable().then(function (w) {
+          return w.write(blob).then(function () { return w.close(); });
+        });
+      }).then(function () {
+        zipDoneModal('zipSavedOkTitle', 'zipSavedOkMsg', name);
+      }).catch(function (err) {
+        // 用户取消保存框就安静退出；权限/异常回退到默认下载
+        if (err && err.name === 'AbortError') return;
+        saveToDefault();
+      });
+      return;
+    }
+    saveToDefault();
   }
 
   function downloadZip(blob, name) {
@@ -1864,7 +1880,6 @@
 
       case 'export-full': doExport('full'); break;
       case 'export-audio': doExport('audio'); break;
-      case 'do-share': if (state._shareFn) state._shareFn(); break;
       case 'do-download': if (state._dlFn) state._dlFn(); break;
       case 'share-again':
         if (state.lastZip) presentZip(state.lastZip.blob, state.lastZip.name);

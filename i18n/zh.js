@@ -105,20 +105,20 @@
       levelCloser: '离近一点',
       levelFarther: '离远一点',
       levelGood: '音量正好',
-      stickerHint: '每 5 句解锁一张贴纸，已经收集 {n} 张',
 
       /* 素材页 */
       crumbRecord: '‹ 录音',
       crumbClipsSuffix: ' · 素材',
       crumbExport: '导出 ›',
       statLine: '共 <b>{n}</b> 段 · 总时长 <b>{total}</b>',
-      statHint: '1 分钟只是最低要求，5 分钟以上会好很多',
+      statHint: '1 分钟只是最低要求，5 分钟以上会好很多哦。',
+      statRefHint: '列表右侧的 ☆ 星标：把这段声音挑作「参考音频」，以后合成新句子时用它当音色参照；再点一下可取消。',
       noClips: '还没有素材。',
       importedAudio: '导入的音频',
       clipMissing: '音频缺失，需要重录',
       noTextYet: '还没写文本',
       btnPlay: '试听',
-      btnEditText: '改文本',
+      btnEditText: '修改标注',
       btnIsRef: '★ 参考音频',
       btnSetRef: '☆ 设为参考',
       btnDelete: '删除',
@@ -155,8 +155,8 @@
       btnExportArchive: '导出音频存档包',
       btnAlsoFull: '也导出一份训练包',
       btnExportFull: '导出完整训练包',
-      btnAudioOnly: '仅导出音频（高级用户自己处理）',
-      noRefTip: '还没有标记参考音频。回到「素材」页，挑 3-10 秒说得最自然的几段，点「设为参考」，训练时效果会好很多。',
+      btnAudioOnly: '仅导出音频',
+      noRefTip: '还没有标记参考音频。回到「素材」页，挑 3-10 秒说得最自然的几段，点「设为参考」；合成新句子时拿它当音色参照，效果会好很多。',
       lastZip: '刚才生成的：{name}',
       btnShareAgain: '再分享 / 下载一次',
       toastNothingToExport: '还没有素材可以导出',
@@ -166,10 +166,13 @@
       zipName: '声音留档-{name}-批次{n}-{date}.zip',
       nextStepsFile: '接下来怎么做.html',
       packedTitle: '打包好了',
-      packedTip: '推荐分享到微信「文件传输助手」，在电脑上直接就能拿到。',
-      btnShare: '分享到微信 / 备忘录',
-      btnDownload: '直接下载到手机',
-      shareTitle: '声音留档备份',
+      packedTip: '下一步会先尝试弹出文件保存框，让你自己选存到哪里；弹不出来时，就直接存进系统的下载文件夹。',
+      btnDownload: '下载到手机',
+      zipTypeDesc: 'ZIP 压缩包',
+      zipSavedOkTitle: '保存好了',
+      zipSavedOkMsg: '“{name}”已经保存到你刚才选的位置。',
+      zipSavedDefaultTitle: '已开始保存',
+      zipSavedDefaultMsg: '“{name}”会存进系统的下载文件夹（手机文件应用里的「下载」目录或「最近项目」）。',
       toastDownloadStarted: '已开始下载',
 
       /* 导入 */
@@ -290,7 +293,7 @@
         }
       },
 
-      /* 年龄段：注意事项 + 引导问题（highlight / kid 等元数据在 content.js） */
+      /* 年龄段：注意事项 + 引导问题（highlight 等元数据在 content.js） */
       ageGroups: {
         toddler: {
           label: '幼儿',
