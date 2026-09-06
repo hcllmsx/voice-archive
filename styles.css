@@ -1007,7 +1007,10 @@ textarea { resize: vertical; }
   background: var(--surface);
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   padding: 22px 20px calc(22px + env(safe-area-inset-bottom));
+  /* 手机浏览器地址栏会占去一部分视口，88vh 容易顶到地址栏后面；
+     用 dvh 按真实可见高度算，顶部固定留出约 15dvh 给地址栏/状态栏 */
   max-height: 88vh;
+  max-height: calc(85dvh - env(safe-area-inset-bottom));
   overflow-y: auto;
   animation: rise 0.22s ease;
 }

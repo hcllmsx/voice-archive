@@ -1700,6 +1700,7 @@
    * 清空 IndexedDB（项目 / 录音 / meta 里的各种「已关闭」标记），
    * 界面语言存在 localStorage 里、不属于 IndexedDB，也要一并清掉，
    * 然后重载页面，让所有内存状态回到初始值。
+   * 注意：这次重载要回到首页，而不是按 URL hash 恢复回设置页。
    */
   function resetToFactory() {
     confirmModal(T('confirmClearTitle'),
@@ -1720,7 +1721,11 @@
           closeModal();
           toast(T('toastCleared'));
           // 留一拍让 toast 显示出来，再回到初始状态
-          setTimeout(function () { location.reload(); }, 700);
+          setTimeout(function () {
+            // 去掉 URL 里的 hash，避免这次重载被 routeFromHash 恢复回设置页
+            try { history.replaceState(null, '', location.pathname + location.search); } catch (e) { /* 忽略 */ }
+            location.reload();
+          }, 700);
         });
       });
   }

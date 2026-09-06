@@ -18,7 +18,7 @@
 
 ```bash
 node tools/serve.js      # 本地开发服务器
-# 打开 http://localhost:8080，建议 Chrome 或 Safari
+# 打开 http://localhost:18181，建议 Chrome 或 Safari
 ```
 
 手机访问需要 HTTPS：把整个目录丢到任意静态托管（GitHub Pages、EdgeOne Pages、
