@@ -223,12 +223,15 @@
     <ol class="step-list">
       <li><span class="idx">1</span>What you exported from your phone is a <b>ZIP file</b>.</li>
       <li><span class="idx">2</span>If you shared it to WeChat "File Transfer": open WeChat on the computer → find "File Transfer" → download the ZIP file.</li>
-      <li><span class="idx">3</span>Once downloaded, unzip it into a folder.</li>
+      <li><span class="idx">3</span>Once downloaded, unzip it into the <b>VoiceArchive-&lt;model name&gt;</b> folder (steps below).</li>
     </ol>
-    <div class="warn"><b>Important: the extracted folder path must NOT contain Chinese characters or spaces!</b><br>
-      Recommended: create an English-named folder directly on a drive root, e.g. <span class="path good">D:\voice</span></div>
-    <p style="margin:6px 0 2px">After unzipping, the structure should look like this:</p>
-<pre class="tree">D:\voice\
+    <div class="warn"><b>Important: the path you unzip to must NOT contain Chinese characters or spaces!</b><br>
+      The model name is the one you entered when creating the project in the app, e.g. <span class="path">nainai</span>.<br>
+      Next to your GPT-SoVITS package folder (e.g. <span class="path good">D:\GPT-SoVITS</span>), create an English folder
+      <span class="path good">VoiceArchive-nainai</span>, then unzip the ZIP into it —
+      final path looks like <span class="path good">D:\GPT-SoVITS\VoiceArchive-nainai</span></div>
+    <p style="margin:6px 0 2px">After unzipping, it should look like this (replace nainai with your own model name):</p>
+<pre class="tree">D:\GPT-SoVITS\VoiceArchive-nainai\
 ├─ wavs\            <span class="cm">a bunch of wav audio files</span>
 ├─ dataset.list     <span class="cm">the transcription file</span>
 ├─ references\      <span class="cm">reference audio</span>
@@ -273,9 +276,9 @@
     <ol class="step-list">
       <li><span class="idx">1</span>Switch to the "<b>1-GPT-SoVITS-TTS</b>" tab at the top</li>
       <li><span class="idx">2</span>Find "<b>1A-训练集格式化工具</b>" (training set formatter)</li>
-      <li><span class="idx">3</span>Fill in the experiment/model name — English letters or numbers only, no Chinese. e.g. <span class="path">zhangsan</span></li>
-      <li><span class="idx">4</span>Fill in "文本标注文件" (transcription file) path — that's the <span class="path good">D:\voice\dataset.list</span> you just unzipped</li>
-      <li><span class="idx">5</span>Fill in "训练集音频文件夹路径" (audio folder) path — that's the wavs folder <span class="path good">D:\voice\wavs</span></li>
+      <li><span class="idx">3</span>Fill in the experiment/model name — the same model name you used in the app, e.g. <span class="path">nainai</span>; it must match the unzipped folder name</li>
+      <li><span class="idx">4</span>Fill in "文本标注文件" (transcription file) path — that's the <span class="path good">D:\GPT-SoVITS\VoiceArchive-nainai\dataset.list</span> you just unzipped</li>
+      <li><span class="idx">5</span>Fill in "训练集音频文件夹路径" (audio folder) path — that's the wavs folder <span class="path good">D:\GPT-SoVITS\VoiceArchive-nainai\wavs</span></li>
       <li><span class="idx">6</span>Check "开启训练集格式化一键三连" (enable the one-click format trio)</li>
       <li><span class="idx">7</span>Click "一键三连" (one-click trio) and wait. Progress shows at the bottom</li>
     </ol>
@@ -366,7 +369,7 @@
 
     <div class="faq">
       <p class="q">Power cut mid-training / accidentally closed the window?</p>
-      <div class="a">It's fine — just run it again. The recordings you made are safe (they're in <span class="path">D:\voice</span>); you'll just need to redo Steps 3 and 4.</div>
+      <div class="a">It's fine — just run it again. The recordings you made are safe (they're in the <span class="path">VoiceArchive-&lt;model name&gt;</span> folder); you'll just need to redo Steps 3 and 4.</div>
     </div>
   </div>
 

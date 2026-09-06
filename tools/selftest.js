@@ -41,7 +41,7 @@ function check(name, cond) {
 
 /* ---------------- 1. 内容完整性 ---------------- */
 console.log('\n[content]');
-check('中文说明文档含路径 D:\\voice', NEXT_STEPS_ZH.includes('D:\\voice'));
+check('中文说明文档含训练数据目录示例', NEXT_STEPS_ZH.includes('VoiceArchive-') && NEXT_STEPS_ZH.includes('D:\\GPT-SoVITS\\VoiceArchive-nainai'));
 check('中文说明文档含权重目录', NEXT_STEPS_ZH.includes('GPT_weights') && NEXT_STEPS_ZH.includes('SoVITS_weights'));
 check('说明文档反斜杠未被转义成垂直制表符', !NEXT_STEPS_ZH.includes('\x0b'));
 check('中文说明文档完整（含结尾祝福）', NEXT_STEPS_ZH.includes('祝你顺利'));

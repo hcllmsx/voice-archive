@@ -30,6 +30,7 @@
     cursor: 0,
     recording: false,
     recCountdown: 2,      // 录音前倒计时（秒），设置页可改，0=点了就开始
+    targetPath: '',       // 电脑目标路径（全局设置；导出训练包时写入 dataset.list）
     countdown: 0,         // 当前倒计时剩余秒数，>0 表示正在倒计时
     cdTimer: 0,           // 倒计时的 setInterval 句柄
     pending: null,        // { task, blob, url, duration, text }
@@ -1283,9 +1284,7 @@
 
     if (!isArchive) {
       html += '<section class="card">' +
-        '<label class="field"><span>' + esc(T('fTargetPath')) + '</span>' +
-        '<input type="text" id="f-path" placeholder="E:\\GPT-SoVITS\\" value="' + esc(p.targetPath || '') + '"></label>' +
-        '<p class="muted small">' + esc(T('targetPathHint')) + '</p>' +
+        '<p class="muted small">' + esc(T('exportPathNote', { path: exportDataDir(p, normalizePath(state.targetPath)) })) + '</p>' +
         '</section>';
     }
 
@@ -1313,12 +1312,26 @@
     return html;
   }
 
+  /** 电脑目标路径的兜底：没设置时用与「接下来怎么做」示例一致的 D:\GPT-SoVITS */
+  function defaultTargetPath() { return 'D:\\GPT-SoVITS\\'; }
+
   function normalizePath(p) {
     let s = (p || '').trim();
-    if (!s) s = 'E:\\GPT-SoVITS\\';
+    if (!s) s = defaultTargetPath();
     s = s.replace(/\//g, '\\');
     if (s.slice(-1) !== '\\') s += '\\';
     return s;
+  }
+
+  /**
+   * 训练包数据最终落地的目录 = 全局基础目录下自动拼一层「VoiceArchive-模型名」。
+   * dataset.list 里的绝对路径、以及电脑上解压 ZIP 的位置都以它为准。
+   * archive（纯音频存档）没有 dataset.list，直接用基础目录即可。
+   */
+  function exportDataDir(p, base) {
+    if ((p.purpose || 'train') === 'archive') return base;
+    const id = String(p.speakerId || '').replace(/[^a-zA-Z0-9_]/g, '') || 'speaker';
+    return base + 'VoiceArchive-' + id + '\\';
   }
 
   /** 把片段的 Blob 读成字节（ZIP 打包器只吃 Uint8Array） */
@@ -1337,8 +1350,8 @@
     const p = state.project;
     // 训练语种代码：中文方言（zh-dialect）也要导出成 zh，GPT-SoVITS 只认这几个
     const lang = C.trainCode(p.language);
-    const pathEl = document.getElementById('f-path');
-    const base = normalizePath(pathEl ? pathEl.value : p.targetPath);
+    const base = normalizePath(state.targetPath);
+    const dir = exportDataDir(p, base);
     const batch = (p.exportCount || 0) + 1;
     const name = T('zipName', { name: p.nickname, n: batch, date: dateStamp() });
 
@@ -1357,7 +1370,7 @@
       zip.add(wavPath, item.bytes);
       const text = String(c.text || '').replace(/[\r\n|]+/g, ' ').trim();
       if (mode === 'full') {
-        listLines.push(base + 'wavs\\' + fname + '|' + p.speakerId + '|' + lang + '|' + text);
+        listLines.push(dir + 'wavs\\' + fname + '|' + p.speakerId + '|' + lang + '|' + text);
         if (c.ref) zip.add('references/' + fname, item.bytes);
       }
       metas.push({
@@ -1382,23 +1395,18 @@
       project: {
         id: p.id, nickname: p.nickname, speakerId: p.speakerId,
         ageGroup: p.ageGroup, language: p.language, dialect: p.dialect || '',
-        purpose: p.purpose || 'train', targetPath: base,
+        purpose: p.purpose || 'train', targetPath: dir,
         createdAt: p.createdAt, exportCount: batch
       },
       clips: metas
     }, null, 2));
 
-    return { zip: zip, name: name, batch: batch, base: base, count: audioCount };
+    return { zip: zip, name: name, batch: batch, base: dir, count: audioCount };
   }
 
   function doExport(mode) {
     const p = state.project;
     if (!state.clips.length) { toast(T('toastNothingToExport')); return; }
-    const pathEl = document.getElementById('f-path');
-    if (pathEl) {
-      // 目标路径随手即存，页面重绘后也不会丢
-      DB.updateProject(p.id, { targetPath: pathEl.value.trim() });
-    }
 
     toast(T('toastPacking'));
     // 让浏览器先把 toast 画出来，再做重活
@@ -1657,6 +1665,13 @@
           (state.recCountdown === n ? ' checked' : '') + '><span>' + esc(label) + '</span></label>';
       }).join('') +
       '</div>' +
+      '</section>';
+
+    html += '<section class="card">' +
+      '<h2>' + esc(T('secTargetPath')) + '</h2>' +
+      '<label class="field"><span>' + esc(T('fTargetPath')) + '</span>' +
+      '<input type="text" id="f-path" value="' + esc(state.targetPath || defaultTargetPath()) + '"></label>' +
+      '<p class="muted small">' + esc(T('targetPathHint')) + '</p>' +
       '</section>';
 
     html += '<section class="card">' +
@@ -1934,6 +1949,12 @@
         return;
       }
 
+      // 设置页：电脑目标路径（全局，训练包 dataset.list 用），改动即存
+      if (el.id === 'f-path') {
+        state.targetPath = el.value.trim();
+        DB.setMeta('targetPath', state.targetPath);
+      }
+
       // 新建项目表单：语言 / 用途 切换时联动
       if (el.type === 'radio' && (el.name === 'language' || el.name === 'purpose')) {
         syncProjectForm();
@@ -2139,6 +2160,9 @@
       return DB.getMeta('privacyDismissed', false);
     }).then(function (v) {
       state.privacyDismissed = !!v;
+      return DB.getMeta('targetPath', '');
+    }).then(function (v) {
+      state.targetPath = v || '';
       return DB.getMeta('openCount', 0);
     }).then(function (n) {
       state.openCount = (n || 0) + 1;

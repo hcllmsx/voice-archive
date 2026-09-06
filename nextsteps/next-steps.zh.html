@@ -230,12 +230,15 @@
     <ol class="step-list">
       <li><span class="idx">1</span>你在手机上导出的是一个 <b>ZIP 文件</b>。</li>
       <li><span class="idx">2</span>如果你当时分享到了微信「文件传输助手」：电脑上打开微信 → 找到「文件传输助手」→ 下载那个 ZIP。</li>
-      <li><span class="idx">3</span>下载好后，把它解压到一个文件夹里。</li>
+      <li><span class="idx">3</span>下载好后，把它解压到 <b>VoiceArchive-模型名</b> 文件夹里（步骤见下）。</li>
     </ol>
-    <div class="warn"><b>重要：解压出来的文件夹路径，不要包含中文和空格！</b><br>
-      推荐做法：直接在 D 盘根目录建一个英文文件夹，例如 <span class="path good">D:\voice</span></div>
-    <p style="margin:6px 0 2px">解压后应该是这样的结构：</p>
-<pre class="tree">D:\voice\
+    <div class="warn"><b>重要：解压到的路径，不要包含中文和空格！</b><br>
+      模型名 = 你在手机 App 新建项目时填的「模型名」，例如 <span class="path">nainai</span>。<br>
+      先在整合包所在的位置（如 <span class="path good">D:\GPT-SoVITS</span>）新建英文文件夹
+      <span class="path good">VoiceArchive-nainai</span>，再把 ZIP 解压进这个文件夹，
+      最终路径类似 <span class="path good">D:\GPT-SoVITS\VoiceArchive-nainai</span></div>
+    <p style="margin:6px 0 2px">解压后应该是这样的结构（把 nainai 换成你自己的模型名）：</p>
+<pre class="tree">D:\GPT-SoVITS\VoiceArchive-nainai\
 ├─ wavs\            <span class="cm">一堆 wav 音频文件</span>
 ├─ dataset.list     <span class="cm">标注文件</span>
 ├─ references\      <span class="cm">参考音频</span>
@@ -280,9 +283,9 @@
     <ol class="step-list">
       <li><span class="idx">1</span>在顶部切换到「<b>1-GPT-SoVITS-TTS</b>」标签页</li>
       <li><span class="idx">2</span>找到「<b>1A-训练集格式化工具</b>」</li>
-      <li><span class="idx">3</span>填写实验/模型名——用英文或数字，不要用中文，例如 <span class="path">zhangsan</span></li>
-      <li><span class="idx">4</span>填写「文本标注文件」路径，就是你解压出来的那个 <span class="path good">D:\voice\dataset.list</span></li>
-      <li><span class="idx">5</span>填写「训练集音频文件夹路径」，就是你解压出来的 wavs 文件夹 <span class="path good">D:\voice\wavs</span></li>
+      <li><span class="idx">3</span>填写实验/模型名——用你在 App 里建项目时填的那个模型名，例如 <span class="path">nainai</span>，要和解压文件夹的名字一致</li>
+      <li><span class="idx">4</span>填写「文本标注文件」路径，就是你解压出来的那个 <span class="path good">D:\GPT-SoVITS\VoiceArchive-nainai\dataset.list</span></li>
+      <li><span class="idx">5</span>填写「训练集音频文件夹路径」，就是你解压出来的 wavs 文件夹 <span class="path good">D:\GPT-SoVITS\VoiceArchive-nainai\wavs</span></li>
       <li><span class="idx">6</span>勾上「<b>开启训练集格式化一键三连</b>」</li>
       <li><span class="idx">7</span>点「<b>一键三连</b>」，然后等着。底部会有进度提示</li>
     </ol>
@@ -373,7 +376,7 @@
 
     <div class="faq">
       <p class="q">训练到一半停电了 / 不小心关了窗口怎么办？</p>
-      <div class="a">没关系，重新来一遍就行。已经录好的音频不会丢（它们在 <span class="path">D:\voice</span> 里），只是要重新跑一遍第 3、4 步。</div>
+      <div class="a">没关系，重新来一遍就行。已经录好的音频不会丢（它们在 <span class="path">VoiceArchive-模型名</span> 文件夹里），只是要重新跑一遍第 3、4 步。</div>
     </div>
   </div>
 
