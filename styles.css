@@ -1129,6 +1129,34 @@ html.scroll-lock body {
   font-size: 18px;
 }
 
+/* 标题栏：标题靠左，右侧放删除之类的图标按钮（与素材页每行右侧同一排布） */
+.modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.modal-head .modal-title {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+}
+
+.modal-head .icon-only {
+  width: 32px;
+  padding: 5px 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.modal-head .icon-del {
+  color: var(--danger);
+}
+
 .modal-text {
   margin: 0 0 14px;
   font-size: 14.5px;

@@ -95,6 +95,12 @@
     return '' + d.getFullYear() + pad(d.getMonth() + 1, 2) + pad(d.getDate(), 2);
   }
 
+  /** 删除图标（垃圾桶）：素材页每条素材、项目设置标题栏共用同一个 */
+  const DEL_ICON =
+    '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+    '<path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/>' +
+    '<path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>';
+
   /** 引导内容语言：跟随当前项目的主要语言 */
   function guideLangOf(p) {
     return I18N.guideLang(p ? p.language : 'zh');
@@ -479,7 +485,12 @@
       '<input type="text" id="f-speaker" value="' + esc(p.speakerId || '') + '" maxlength="24"></label>';
 
     openModal(
+      '<div class="modal-head">' +
       '<h3 class="modal-title">' + esc(T('projectSettingsTitle')) + '</h3>' +
+      '<button type="button" class="btn tiny icon-only icon-del" data-act="delete-project" ' +
+      'title="' + esc(T('btnDeleteProject')) + '" aria-label="' + esc(T('btnDeleteProject')) + '">' +
+      DEL_ICON + '</button>' +
+      '</div>' +
       '<div class="form">' +
       '<label class="field"><span>' + esc(T('fNickname')) + '</span>' +
       '<input type="text" id="f-nickname" value="' + esc(p.nickname) + '" maxlength="20"></label>' +
@@ -489,9 +500,7 @@
       '<div class="modal-actions">' +
       '<button class="btn ghost" data-act="modal-close">' + esc(T('btnCancel')) + '</button>' +
       '<button class="btn primary" data-act="save-project-settings">' + esc(T('btnSave')) + '</button>' +
-      '</div>' +
-      '<button type="button" class="btn danger-ghost block" data-act="delete-project">' +
-      esc(T('btnDeleteProject')) + '</button>'
+      '</div>'
     );
   }
 
@@ -1234,10 +1243,7 @@
           '<span aria-hidden="true">' + (c.ref ? '\u2605' : '\u2606') + '</span></button>' +
           '<button type="button" class="btn tiny icon-only icon-del" data-act="del-clip" data-id="' + c.id + '" ' +
           'title="' + esc(T('btnDelete')) + '" aria-label="' + esc(T('btnDelete')) + '">' +
-          '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
-          '<path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/>' +
-          '<path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>' +
-          '</button>' +
+          DEL_ICON + '</button>' +
           '</span>' +
           '</div></li>';
       });
@@ -1662,6 +1668,24 @@
   /* ================================================================== */
   /* 导入                                                               */
   /* ================================================================== */
+
+  /**
+   * 按「文件名」在包里找，忽略它所在的目录层级（取层级最浅的那个）。
+   * 现在的包多了一层 VoiceArchive-xxx/ 根目录，project.json、wav 都在里面，
+   * 用户也可能在外面改名、重新压缩——只看文件名最稳。
+   */
+  function findByBase(entries, base) {
+    let hit = null;
+    let depth = Infinity;
+    entries.forEach(function (e) {
+      if (e.dir) return;
+      const parts = String(e.name).split('/');
+      if (parts[parts.length - 1] !== base) return;
+      if (parts.length < depth) { depth = parts.length; hit = e; }
+    });
+    return hit ? hit.data : null;
+  }
+
   function handleImport(file) {
     if (!file) return;
     const reader = new FileReader();
@@ -1671,12 +1695,15 @@
           importJson(JSON.parse(new TextDecoder('utf-8').decode(reader.result)), []);
         } else {
           const entries = ZIP.read(reader.result);
-          const jsonBytes = ZIP.find(entries, 'project.json');
+          const jsonBytes = findByBase(entries, 'project.json');
           let data = null;
           if (jsonBytes) {
             try { data = JSON.parse(new TextDecoder('utf-8').decode(jsonBytes)); } catch (e) { data = null; }
           }
-          importJson(data, entries.filter(function (e) { return !e.dir && e.name !== 'project.json'; }));
+          const files = entries.filter(function (e) {
+            return !e.dir && String(e.name).split('/').pop() !== 'project.json';
+          });
+          importJson(data, files);
         }
       } catch (e) {
         toast(T('toastCantRead', { msg: e && e.message ? e.message : '-' }));
@@ -1695,7 +1722,7 @@
     const bare = zipPath.replace(/^.*\//, '');
     return ZIP.find(files, zipPath) ||
       ZIP.find(files, 'wavs/' + bare) ||
-      ZIP.find(files, bare) ||
+      findByBase(files, bare) ||
       null;
   }
 
