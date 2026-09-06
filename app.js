@@ -101,7 +101,7 @@
   }
 
   function buildProjectTasks(p) {
-    return C.buildTasks(p.ageGroup, p.dialect, guideLangOf(p), I18N.getUiLang());
+    return C.buildTasks(p.ageGroup, p.language || 'zh', p.dialect, guideLangOf(p), I18N.getUiLang());
   }
 
   let toastTimer = 0;
@@ -270,7 +270,7 @@
       html += '<ul class="proj-list">';
       state.projects.forEach(function (p) {
         const g = C.ageGroup(p.ageGroup, I18N.getUiLang());
-        const total = C.buildTasks(p.ageGroup, p.dialect).length;
+        const total = C.buildTasks(p.ageGroup, p.language || 'zh', p.dialect).length;
         const done = Math.min(p.clipCount || 0, total);
         const pct = total ? Math.round(done / total * 100) : 0;
         const langTag = p.dialect || C.language(p.language, I18N.getUiLang()).label;
@@ -351,7 +351,7 @@
     const groups = C.AGE_GROUPS.map(function (g) {
       const gl = C.ageGroup(g.id, ui);
       return '<label class="chip"><input type="radio" name="ageGroup" value="' + g.id + '"' +
-        (g.id === 'adult' ? ' checked' : '') + '><span>' + esc(gl.label + '（' + gl.range + '）') + '</span></label>';
+        (g.id === C.DEFAULT_AGE_GROUP ? ' checked' : '') + '><span>' + esc(gl.label + '（' + gl.range + '）') + '</span></label>';
     }).join('');
     const langs = C.LANGUAGES.map(function (l, i) {
       const ll = C.language(l.code, ui);
@@ -393,7 +393,7 @@
 
     const speakerRaw = (document.getElementById('f-speaker').value || '').trim();
     const speakerId = speakerRaw.replace(/[^a-zA-Z0-9_]/g, '') || ('speaker' + pad(1, 2));
-    const ageGroup = (document.querySelector('input[name=ageGroup]:checked') || {}).value || 'adult';
+    const ageGroup = (document.querySelector('input[name=ageGroup]:checked') || {}).value || C.DEFAULT_AGE_GROUP;
     const language = (document.querySelector('input[name=language]:checked') || {}).value || 'zh';
     const purpose = (document.querySelector('input[name=purpose]:checked') || {}).value || 'train';
 
@@ -688,6 +688,11 @@
       '<p class="task-group">' + esc(task.groupTitle) + '</p>' +
       '<h2 class="task-label">' + esc(task.label) + '</h2>' +
       (task.tip ? '<p class="task-tip">' + esc(task.tip) + '</p>' : '') +
+      (task.idea
+        ? '<button type="button" class="btn tiny ghost idea-btn" data-act="toggle-idea" aria-expanded="false">' +
+          esc(T('ideaBtn')) + '</button>' +
+          '<p class="task-idea" hidden>' + esc(task.idea) + '</p>'
+        : '') +
       '</section>';
 
     if (g.kid && done > 0) {
@@ -1513,22 +1518,27 @@
       data = {
         project: {
           id: 'p_import_' + Date.now(), nickname: T('importedRecordings'),
-          speakerId: 'speaker', ageGroup: 'adult', language: 'zh'
+          speakerId: 'speaker', ageGroup: C.DEFAULT_AGE_GROUP, language: 'zh'
         },
         clips: []
       };
     }
 
     const meta = data.project;
-    const metas = data.clips || [];
+    // 以当前版本为准：不认识的字段 / 旧版本备份直接丢弃，不做任何猜测
+    if (!C.projectCompatible(meta)) {
+      toast(T('toastUnknownDropped'));
+      return;
+    }
+    const metas = Array.isArray(data.clips) ? data.clips : [];
 
     DB.getProject(meta.id).then(function (existing) {
       return existing || DB.createProject({
         id: meta.id,
         nickname: meta.nickname || T('importedRecordings'),
         speakerId: meta.speakerId || 'speaker',
-        ageGroup: meta.ageGroup || 'adult',
-        language: meta.language || 'zh',
+        ageGroup: meta.ageGroup,
+        language: meta.language,
         dialect: meta.dialect || '',
         purpose: meta.purpose || 'train',
         targetPath: meta.targetPath || ''
@@ -1808,6 +1818,15 @@
       case 'discard-clip': discardClip(); break;
       case 'toggle-tasks': state.showTaskList = !state.showTaskList; render(); break;
       case 'toggle-resume': state.showResume = !state.showResume; render(); break;
+      case 'toggle-idea': {
+        // 「给点思路」示例展开：只动本卡片的两个节点，不整页重渲染
+        const box = el.parentNode.querySelector('.task-idea');
+        if (!box) break;
+        const open = !box.hidden;
+        box.hidden = open;
+        el.setAttribute('aria-expanded', String(!open));
+        break;
+      }
       case 'jump':
         if (state.countdown) clearCountdown();
         state.pending = null;
@@ -2027,13 +2046,23 @@
 
   function refreshProjects() {
     return DB.listProjects().then(function (list) {
-      return Promise.all(list.map(function (p) {
-        return DB.getClips(p.id).then(function (clips) {
-          p.clipCount = clips.length;
-          p.duration = clips.reduce(function (s, c) { return s + (c.duration || 0); }, 0);
-          return p;
-        });
-      }));
+      // 本地库里不认识的旧数据直接丢弃并提示（projects + 其全部录音一起删）
+      const bad = list.filter(function (p) { return !C.projectCompatible(p); });
+      const good = list.filter(function (p) { return C.projectCompatible(p); });
+      const cleanup = bad.length
+        ? Promise.all(bad.map(function (p) { return DB.deleteProject(p.id); })).then(function () {
+            toast(T('toastUnknownDropped'));
+          })
+        : Promise.resolve();
+      return cleanup.then(function () {
+        return Promise.all(good.map(function (p) {
+          return DB.getClips(p.id).then(function (clips) {
+            p.clipCount = clips.length;
+            p.duration = clips.reduce(function (s, c) { return s + (c.duration || 0); }, 0);
+            return p;
+          });
+        }));
+      });
     }).then(function (list) {
       state.projects = list;
       render();

@@ -47,16 +47,37 @@ check('说明文档反斜杠未被转义成垂直制表符', !NEXT_STEPS_ZH.incl
 check('中文说明文档完整（含结尾祝福）', NEXT_STEPS_ZH.includes('祝你顺利'));
 
 const AGE_IDS = C.AGE_GROUPS.map(g => g.id).join(',');
-check('5 个年龄段 → ' + AGE_IDS, AGE_IDS === 'toddler,child,teen,adult,elder');
+check('6 个年龄段 → ' + AGE_IDS, AGE_IDS === 'toddler,child,teen,youngAdult,midlife,elder');
 
 const qCounts = C.AGE_GROUPS.map(g => ZH.ageGroups[g.id].questions.length).join(',');
-check('中文引导问题数量 10,10,9,9,9 → ' + qCounts, qCounts === '10,10,9,9,9');
+check('中文引导问题数量 9,9,9,9,10,10 → ' + qCounts, qCounts === '9,9,9,9,10,10');
+
+// 数据校验：只认当前版本认识的字段，旧版 adult / 未知 id 一律不兼容
+check('默认年龄段为 youngAdult', C.DEFAULT_AGE_GROUP === 'youngAdult');
+check('projectCompatible 认可当前版本字段', C.projectCompatible({
+  id: 'p1', nickname: '测试', ageGroup: 'midlife', language: 'zh-dialect', purpose: 'archive'
+}));
+check('projectCompatible 拒绝旧版 adult', !C.projectCompatible({
+  id: 'p2', nickname: '测试', ageGroup: 'adult', language: 'zh'
+}));
+check('projectCompatible 拒绝未知年龄段', !C.projectCompatible({
+  id: 'p3', nickname: '测试', ageGroup: 'senior', language: 'zh'
+}));
+check('projectCompatible 拒绝未知语言', !C.projectCompatible({
+  id: 'p4', nickname: '测试', ageGroup: 'midlife', language: 'de'
+}));
+check('projectCompatible 拒绝缺 id / 缺年龄段', !C.projectCompatible(null) && !C.projectCompatible({
+  id: 'p5', language: 'zh'
+}));
+check('projectCompatible 允许缺 purpose（按默认 train）', C.projectCompatible({
+  id: 'p6', nickname: '测试', ageGroup: 'midlife', language: 'zh'
+}));
 
 check('中文必录清单 6 组', ZH.checklist.length === 6);
 const taskCounts = C.AGE_GROUPS.map(g => C.buildTasks(g.id).length);
 console.log('  任务总数：' + taskCounts.join(', '));
-check('每组任务数一致（16 条必录）',
-  C.AGE_GROUPS.every(g => C.buildTasks(g.id).length - ZH.ageGroups[g.id].questions.length === 16));
+check('每组任务数一致（18 条必录）',
+  C.AGE_GROUPS.every(g => C.buildTasks(g.id).length - ZH.ageGroups[g.id].questions.length === 18));
 check('任务 id 无重复',
   C.AGE_GROUPS.every(g => new Set(C.buildTasks(g.id).map(t => t.id)).size === C.buildTasks(g.id).length));
 
@@ -73,21 +94,19 @@ check('T 缺 key 回退 key 本身', window.I18N.T('__no_such_key__') === '__no_
 
 /* 引导任务组装：英文引导 + 中文界面混排 */
 {
-  const zhOnly = C.buildTasks('elder', '', 'zh', 'zh');
-  const enGuideZhUi = C.buildTasks('elder', '', 'en', 'zh');
+  const zhOnly = C.buildTasks('elder', 'zh', '', 'zh', 'zh');
+  const enGuideZhUi = C.buildTasks('elder', 'zh', '', 'en', 'zh');
   check('英文引导的任务数与中文一致', enGuideZhUi.length === zhOnly.length);
-  check('英文引导的问题为英文', C.buildTasks('elder', '', 'en', 'en').some(t => /house|child|spouse|work/i.test(t.label)));
+  check('英文引导的问题为英文', C.buildTasks('elder', 'zh', '', 'en', 'en').some(t => /house|child|spouse|work/i.test(t.label)));
   check('界面中文时聊天组标题为中文',
-    C.buildTasks('elder', '', 'en', 'zh').some(t => t.group === 'guide' && t.groupTitle === '聊一聊'));
+    C.buildTasks('elder', 'zh', '', 'en', 'zh').some(t => t.group === 'guide' && t.groupTitle === '聊一聊'));
 
-  const dZh = C.buildTasks('elder', '四川话', 'zh', 'zh');
-  const firstDialect = dZh.findIndex(function (t) { return t.id.indexOf('must.dialect.') === 0; });
-  const firstCatch = dZh.findIndex(function (t) { return t.id.indexOf('must.catchphrase.') === 0; });
-  check('方言组前移（call 3 句之后紧接方言，且先于口头禅）', firstDialect === 3 && firstCatch > firstDialect);
+  check('普通话项目保留方言组', C.buildTasks('elder', 'zh', '', 'zh', 'zh').some(t => t.id.indexOf('must.dialect.') === 0));
+  check('外语项目（yue）跳过方言组', !C.buildTasks('elder', 'yue', '', 'zh', 'zh').some(t => t.id.indexOf('must.dialect.') === 0));
   check('方言组提示含方言（中文界面）',
-    C.buildTasks('elder', '四川话', 'en', 'zh').some(t => t.id === 'must.dialect.0' && t.tip.indexOf('四川话') >= 0));
+    C.buildTasks('elder', 'zh', '四川话', 'zh', 'zh').some(t => t.id === 'must.dialect.0' && t.tip.indexOf('四川话') >= 0));
   check('方言组提示含方言（英文界面）',
-    C.buildTasks('elder', 'Sichuanese', 'en', 'en').some(t => t.id === 'must.dialect.0' && t.tip.indexOf('Sichuanese') >= 0));
+    C.buildTasks('elder', 'zh', 'Sichuanese', 'en', 'en').some(t => t.id === 'must.dialect.0' && t.tip.indexOf('Sichuanese') >= 0));
 }
 check('方言提示（中文）', C.dialectNote('四川话', 'zh').indexOf('普通话') >= 0);
 check('方言提示（英文）', C.dialectNote('Sichuanese', 'en').indexOf('Mandarin') >= 0);

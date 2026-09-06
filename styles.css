@@ -526,6 +526,22 @@ h1, h2, h3 {
   color: var(--muted);
 }
 
+/* 「给点思路」示例展开 */
+.idea-btn {
+  margin-top: 12px;
+}
+
+.task-idea {
+  margin: 0;
+  padding-top: 10px;
+  margin-top: 12px;
+  border-top: 1px dashed var(--line);
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--muted);
+  white-space: pre-wrap;
+}
+
 .recorder {
   text-align: center;
   padding: 12px 0 20px;
@@ -702,10 +718,13 @@ h1, h2, h3 {
   margin-bottom: 14px;
 }
 
+/* 字段名（相当于小标题）：主文字色 + 半粗，
+   与下方 .muted.small 说明文字（灰小字）区分主次 */
 .field > span {
   display: block;
-  font-size: 13.5px;
-  color: var(--muted);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
   margin-bottom: 6px;
 }
 

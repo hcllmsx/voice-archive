@@ -71,9 +71,13 @@ window.Content = (function () {
     { id: 'toddler', highlight: true, kid: true },
     { id: 'child', highlight: false, kid: true },
     { id: 'teen', highlight: true, kid: false },
-    { id: 'adult', highlight: false, kid: false },
+    { id: 'youngAdult', highlight: false, kid: false },
+    { id: 'midlife', highlight: false, kid: false },
     { id: 'elder', highlight: true, kid: false }
   ];
+
+  /** 默认年龄段（新建项目 / 数据缺失时兜底），取青年成年组 */
+  const DEFAULT_AGE_GROUP = 'youngAdult';
 
   /* ------------------------------------------------------------------ */
   /* 基础工具                                                            */
@@ -86,6 +90,20 @@ window.Content = (function () {
       if (k === key) return list[i];
     }
     return fallback || list[0];
+  }
+
+  /** 结构数组里是否存在某个 id/code（不含兜底） */
+  function hasId(list, key) {
+    for (let i = 0; i < list.length; i++) {
+      const k = list[i].id !== undefined ? list[i].id : list[i].code;
+      if (k === key) return true;
+    }
+    return false;
+  }
+
+  /** 默认年龄段的元数据项（只在结构里兜底用，正常路径不会触发） */
+  function defaultAgeMeta() {
+    return byId(AGE_GROUPS, DEFAULT_AGE_GROUP, AGE_GROUPS[0]);
   }
 
   /** 某语言的引导内容包（core 已保证回退 zh，不会为 null） */
@@ -115,9 +133,21 @@ window.Content = (function () {
 
   /** 按 id 取年龄段（lang 决定 label/range/duration/notes/questions） */
   function ageGroup(id, lang) {
-    const base = byId(AGE_GROUPS, id, AGE_GROUPS[3]);
+    const base = byId(AGE_GROUPS, id, defaultAgeMeta());
     const t = (guide(lang).ageGroups || {})[base.id] || {};
     return merge(base, t);
+  }
+
+  /**
+   * 判断一条项目数据是否被当前版本认识：
+   * 年龄段 / 语言 / 用途的 id 都要在当前结构里（purpose 缺失时按默认 train 算）。
+   * 不认识的一律视为旧版本 / 未知数据，调用方直接丢弃并提示，不做任何猜测。
+   */
+  function projectCompatible(p) {
+    if (!p || !p.id) return false;
+    return hasId(AGE_GROUPS, p.ageGroup) &&
+      hasId(LANGUAGES, p.language) &&
+      hasId(PURPOSES, p.purpose == null ? 'train' : p.purpose);
   }
 
   /** 按 code 取语言（lang 决定 label/hint；train/dialectable 始终可用） */
@@ -157,15 +187,24 @@ window.Content = (function () {
   /**
    * 组装某个项目的录音任务队列
    * 顺序：必录清单（逐条展开）→ 引导问题
+   * @param groupId   年龄段 id
+   * @param langCode  项目主要语言 code（zh / zh-dialect / yue / en / ja / ko）
+   * @param dialect   用户填的具体方言（如「四川话」，仅普通话项目才可能出现）
    * @param guideLang 引导问题的语言（念给被录者听的，跟随项目主要语言）
    * @param uiLang    分组标题 / 提示的语言（给操作者看的，跟随界面语言）
-   * @returns {Array<{id:string,group:string,groupTitle:string,label:string,tip:string}>}
+   * @returns {Array<{id,group,groupTitle,label,tip,idea}>}
+   *   idea 是「给点思路 / 示例答案」（可选），有值时录音页才显示展开按钮
+   *
+   * 必录清单里的「方言 / 家乡话」组是普通话项目的特色（普通话语料里掺一两句
+   * 家乡话当点缀）；整个项目本来就在讲方言或外语（zh-dialect / yue / en / ja / ko）
+   * 时这一组会让被录者摸不着头脑，直接跳过。
    */
-  function buildTasks(groupId, dialect, guideLang, uiLang) {
+  function buildTasks(groupId, langCode, dialect, guideLang, uiLang) {
     const gl = guideLang || 'zh';
     const ui = uiLang || gl;
-    const base = byId(AGE_GROUPS, groupId, AGE_GROUPS[3]);
+    const base = byId(AGE_GROUPS, groupId, defaultAgeMeta());
     const d = (dialect || '').trim();
+    const keepDialectGroup = !langCode || langCode === 'zh';
 
     const glP = guide(gl);            // 念给被录者（引导语言）
     const uiP = guide(ui);            // 给操作者（界面语言）
@@ -176,36 +215,28 @@ window.Content = (function () {
     const uiMeta = uiP.ui || {};
 
     // 组顺序跟随「界面语言」包（zh / en 两包结构一致）
-    const groups = uiCheck.map(function (item) {
+    const groups = [];
+    uiCheck.forEach(function (item) {
+      if (item.id === 'dialect' && !keepDialectGroup) return;   // 跳过家乡话组
       const glItem = glBy[item.id] || item;
       let hint = item.hint || '';
       const tasks = arr(glItem.tasks).map(function (t, i) {
-        let tip = t.tip || hint;
+        // 兼容字符串或 { label, tip, idea } 对象
+        const to = (t && typeof t === 'object') ? t : { label: t };
+        let tip = to.tip || hint;
         if (item.id === 'dialect' && d) {
           // 方言被填了就点明用什么话讲；模板语言跟随操作者的界面语言
           tip = i === 0
             ? tpl(uiMeta, 'dialectTipFirst', d, tip)
             : tpl(uiMeta, 'dialectTipRest', d, tip);
         }
-        return { t: t, tip: tip };
+        return { to: to, tip: tip };
       });
       if (item.id === 'dialect' && d) {
         hint = tpl(uiMeta, 'dialectGroupHint', d, hint);
       }
-      return { item: item, hint: hint, tasks: tasks };
+      groups.push({ item: item, hint: hint, tasks: tasks });
     });
-
-    // 说了方言的话，把方言组提到前面（紧跟口头禅）：它们都是语言指纹
-    if (d) {
-      let idx = -1;
-      for (let i = 0; i < groups.length; i++) {
-        if (groups[i].item.id === 'dialect') { idx = i; break; }
-      }
-      if (idx > 1) {
-        const moved = groups.splice(idx, 1)[0];
-        groups.splice(1, 0, moved);
-      }
-    }
 
     const tasks = [];
     groups.forEach(function (grp) {
@@ -214,20 +245,24 @@ window.Content = (function () {
           id: 'must.' + grp.item.id + '.' + i,
           group: 'must',
           groupTitle: grp.item.title,
-          label: entry.t.label,
-          tip: entry.tip
+          label: entry.to.label,
+          tip: entry.tip,
+          idea: entry.to.idea || ''
         });
       });
     });
 
     const qGroup = (glP.ageGroups || {})[base.id] || {};
     arr(qGroup.questions).forEach(function (q, i) {
+      // 兼容字符串或 { q, idea } 对象
+      const qo = (q && typeof q === 'object') ? q : { q: q };
       tasks.push({
         id: 'guide.' + base.id + '.' + i,
         group: 'guide',
         groupTitle: uiMeta.chatGroupTitle || '',
-        label: q,
-        tip: uiMeta.guideTaskTip || ''
+        label: qo.q,
+        tip: uiMeta.guideTaskTip || '',
+        idea: qo.idea || ''
       });
     });
     return tasks;
@@ -246,10 +281,12 @@ window.Content = (function () {
     LANGUAGES: LANGUAGES,
     PURPOSES: PURPOSES,
     AGE_GROUPS: AGE_GROUPS,
+    DEFAULT_AGE_GROUP: DEFAULT_AGE_GROUP,
     ageGroup: ageGroup,
     language: language,
     purpose: purpose,
     trainCode: trainCode,
+    projectCompatible: projectCompatible,
     buildTasks: buildTasks,
     dialectNote: dialectNote,
     nextSteps: nextSteps
