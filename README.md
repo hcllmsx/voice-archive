@@ -17,12 +17,22 @@
 （直接双击 `index.html` 无法录音）。
 
 ```bash
-node _temp/serve.js      # 本地开发服务器
+node tools/serve.js      # 本地开发服务器
 # 打开 http://localhost:8080，建议 Chrome 或 Safari
 ```
 
 手机访问需要 HTTPS：把整个目录丢到任意静态托管（GitHub Pages、EdgeOne Pages、
 Vercel、Netlify）即可。微信内置浏览器不支持录音，会引导用系统浏览器打开。
+
+## 开发工具
+
+以下脚本零依赖，用系统自带的 Node 就能跑：
+
+| 命令 | 作用 |
+| --- | --- |
+| `node tools/serve.js` | 本地静态服务器（仅开发用，端口可用 `PORT` 环境变量改） |
+| `node tools/gen-icons.js` | 重新生成 `icons/*.png` 与 `favicon.ico`（改图标后运行） |
+| `node tools/selftest.js` | 核心逻辑自测：ZIP 打包/解包、inflate、WAV 封装、内容完整性 |
 
 ## 使用流程
 
