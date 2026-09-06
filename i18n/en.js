@@ -23,7 +23,7 @@
       langHint: 'Switches the interface only. Recording prompts follow the project\'s main language.',
       cdSettingTitle: 'Recording countdown',
       cdSettingHint: 'Waits a few seconds after tapping Start before actually recording — lets the speaker get ready',
-      cdOff: 'None — start right away',
+      cdOff: 'None',
       cdSec: '{n}s',
 
       /* 首页 */

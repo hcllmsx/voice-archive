@@ -1899,17 +1899,17 @@
       '<button class="btn ghost block" data-act="go-install">' + esc(T('btnHowToInstall')) + '</button>' +
       '</section>';
 
+    html += '<section class="card danger-zone">' +
+      '<h2>' + esc(T('secDanger')) + '</h2>' +
+      '<p class="muted">' + esc(T('dangerHint')) + '</p>' +
+      '<button class="btn danger block" data-act="factory-reset">' + esc(T('btnClearAll')) + '</button>' +
+      '</section>';
+
     html += '<section class="card">' +
       '<h2>' + esc(T('secAbout')) + '</h2>' +
       '<p class="muted small">' + esc(C.APP.name) + ' · ' + esc(C.APP.nameEn) + '<br>' +
       esc(T('aboutVersion', { v: C.APP.version })) + '<br>' +
       esc(T('aboutAuthor', { a: C.APP.author, id: C.APP.authorId })) + '</p>' +
-      '</section>';
-
-    html += '<section class="card danger-zone">' +
-      '<h2>' + esc(T('secDanger')) + '</h2>' +
-      '<p class="muted">' + esc(T('dangerHint')) + '</p>' +
-      '<button class="btn danger block" data-act="factory-reset">' + esc(T('btnClearAll')) + '</button>' +
       '</section>';
 
     html += footerHTML();
