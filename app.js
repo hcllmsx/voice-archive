@@ -116,10 +116,19 @@
     toastTimer = setTimeout(function () { t.classList.remove('show'); }, 2400);
   }
 
+  // 弹窗等全屏浮层打开时锁住根滚动，防止“滚动穿透”：
+  // 在手机/触屏上，手指在弹窗里上下滑动会带动背景页面跟着滚。
+  // 所有弹层都走 openModal / closeModal 这两个唯一入口，统一在这里加/解锁。
+  function lockBodyScroll(on) {
+    if (on) document.documentElement.classList.add('scroll-lock');
+    else document.documentElement.classList.remove('scroll-lock');
+  }
+
   function closeModal() {
     const m = modalEl();
     m.hidden = true;
     m.innerHTML = '';
+    lockBodyScroll(false);
   }
 
   function openModal(html) {
@@ -127,6 +136,7 @@
     m.innerHTML = '<div class="modal-mask" data-act="modal-close"></div>' +
       '<div class="modal-body">' + html + '</div>';
     m.hidden = false;
+    lockBodyScroll(true);
   }
 
   let pendingConfirm = null;
@@ -643,6 +653,15 @@
     if (dNote) {
       html += '<p class="modal-text">' + esc(dNote) + '</p>';
     }
+
+    // 「给每段录音写文字」小提醒：记录实际发声的字，别用括号注释。
+    // 与年龄段注意事项隔开，字号稍小、呈灰色，避免喧宾夺主。
+    const labelNotes = ['labelNote1', 'labelNote2', 'labelNote3', 'labelNote4'].map(function (k) {
+      return '<li class="small muted">' + esc(T(k)) + '</li>';
+    }).join('');
+    html += '<p class="modal-text"><b>' + esc(T('labelNoteTitle')) + '</b></p>' +
+      '<ul class="steps">' + labelNotes + '</ul>';
+
     html += '<div class="modal-actions col">' +
       '<button class="btn primary" data-act="modal-close">' + esc(T('btnGotIt')) + '</button>' +
       '</div>';

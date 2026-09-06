@@ -67,7 +67,13 @@
 
       /* 录音页 */
       crumbProjects: '‹ Projects',
-      recGuide: 'Recording tips',
+      recGuide: 'Recording & labeling guide',
+      /* Small reminders for writing the text of each take (aligned with GPT-SoVITS labeling habits) */
+      labelNoteTitle: 'When writing the text for a take',
+      labelNote1: 'Write the sound you actually made, not the prompt: if it says to laugh but you only let out a soft “hmm”, write “hmm”, not “ha ha”.',
+      labelNote2: 'Write particles and sighs as heard — “um”, “er”, “ah”. Whatever the sound most resembles, write that.',
+      labelNote3: 'Don’t add notes in brackets like “(laugh)” or “(sigh)” — the model learns letters and sounds, not stage directions.',
+      labelNote4: 'If a take is pure laughter with no actual words, it works better as a reference clip than as a training sentence.',
       unbackedN: '{n} clip(s) not backed up',
       backedOk: 'Backed up',
       noData: 'No data yet',

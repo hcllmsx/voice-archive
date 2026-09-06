@@ -1056,6 +1056,13 @@ textarea { resize: vertical; }
 /* ================================================================== */
 /* 弹窗                                                               */
 /* ================================================================== */
+/* 弹窗等全屏浮层打开时（app.js 里 openModal 会给 <html> 加 .scroll-lock）
+   锁住背景滚动，避免弹窗里滑动时底下的页面跟着滚（滚动穿透）。 */
+html.scroll-lock,
+html.scroll-lock body {
+  overflow: hidden;
+}
+
 .modal[hidden] { display: none; }
 
 .modal {
@@ -1085,6 +1092,8 @@ textarea { resize: vertical; }
   max-height: 88vh;
   max-height: calc(85dvh - env(safe-area-inset-bottom));
   overflow-y: auto;
+  /* 弹层内容滚到顶/底部时不要继续带动外层滚动 */
+  overscroll-behavior: contain;
   animation: rise 0.22s ease;
 }
 
