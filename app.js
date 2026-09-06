@@ -342,6 +342,7 @@
       nickname: nickname, speakerId: speakerId, ageGroup: ageGroup,
       language: language, dialect: dialect, purpose: purpose
     }).then(function (p) {
+      upsertProject(p);
       closeModal();
       return openProject(p);
     }).catch(function (e) {
@@ -1271,6 +1272,7 @@
         });
       });
     }).then(function (r) {
+      upsertProject(r.project);
       return openProject(r.project).then(function () {
         if (r.added > 0) toast(T('toastRestoredN', { n: r.added }));
         else toast(T('toastAlreadyHere'));
@@ -1331,14 +1333,20 @@
     html += '<section class="card danger-zone">' +
       '<h2>' + esc(T('secDanger')) + '</h2>' +
       '<p class="muted">' + esc(T('dangerHint')) + '</p>' +
-      '<button class="btn danger block" data-act="clear-all">' + esc(T('btnClearAll')) + '</button>' +
+      '<button class="btn danger block" data-act="factory-reset">' + esc(T('btnClearAll')) + '</button>' +
       '</section>';
 
     html += footerHTML();
     return html;
   }
 
-  function clearAll() {
+  /**
+   * 恢复出厂设置
+   * 清空 IndexedDB（项目 / 录音 / meta 里的各种「已关闭」标记），
+   * 界面语言存在 localStorage 里、不属于 IndexedDB，也要一并清掉，
+   * 然后重载页面，让所有内存状态回到初始值。
+   */
+  function resetToFactory() {
     confirmModal(T('confirmClearTitle'),
       T('confirmClearBody'),
       T('confirmClearOk')).then(function (ok) {
@@ -1348,9 +1356,13 @@
           state.project = null;
           state.clips = [];
           state.lastZip = null;
+          state.installDismissed = false;
+          state.privacyDismissed = false;
+          try { localStorage.removeItem('va-ui-lang'); } catch (e) { /* 忽略 */ }
           closeModal();
-          go('home');
           toast(T('toastCleared'));
+          // 留一拍让 toast 显示出来，再回到初始状态
+          setTimeout(function () { location.reload(); }, 700);
         });
       });
   }
@@ -1413,7 +1425,14 @@
         else closeModal();
         break;
 
-      case 'go-home': go('home'); break;
+      case 'go-home':
+        // 回首页前重新拉一次列表：新录的进度、新建的项目都能立刻看到
+        if (state.project) {
+          refreshProjects().then(function () { go('home'); });
+        } else {
+          go('home');
+        }
+        break;
       case 'go-record': go('record'); break;
       case 'go-manage': go('manage'); break;
       case 'go-export': go('export'); break;
@@ -1470,7 +1489,7 @@
       case 'backup-later': closeModal(); break;
       case 'backup-mute': state.backupMuted = true; closeModal(); break;
 
-      case 'clear-all': clearAll(); break;
+      case 'factory-reset': resetToFactory(); break;
       default: break;
     }
   }
@@ -1622,6 +1641,27 @@
       if (p) return true;
       return navigator.storage.persist ? navigator.storage.persist() : false;
     }).catch(function () { return false; });
+  }
+
+  /**
+   * 把项目同步进首页列表：新建 / 导入后不必刷新页面就能看到。
+   * 已在列表里的只更新字段（列表按 updatedAt 排序，新建的排最前）。
+   */
+  function upsertProject(p) {
+    let row = null;
+    for (let i = 0; i < state.projects.length; i++) {
+      if (state.projects[i].id === p.id) { row = state.projects[i]; break; }
+    }
+    if (!row) {
+      row = { id: p.id, clipCount: 0, duration: 0 };
+      state.projects.unshift(row);
+    }
+    ['nickname', 'speakerId', 'ageGroup', 'language', 'dialect', 'purpose',
+      'createdAt', 'updatedAt', 'exportCount', 'lastBackupCount', 'targetPath']
+      .forEach(function (k) {
+        if (p[k] !== undefined) row[k] = p[k];
+      });
+    return row;
   }
 
   function refreshProjects() {

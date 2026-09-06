@@ -176,13 +176,17 @@ window.I18N = (function () {
       aboutVersion: '版本 {v}',
       aboutAuthor: '作者 {a}（{id}）',
       aboutTech: '纯前端实现，无框架、无依赖、无网络请求。',
-      secDanger: '清空数据',
-      dangerHint: '删除这台设备上保存的所有项目和录音。删了就找不回来了。',
-      btnClearAll: '一键清空所有数据',
-      confirmClearTitle: '清空所有数据？',
-      confirmClearBody: '所有项目和录音都会被删掉，<b>无法恢复</b>。<br>如果还没导出备份，建议先返回去导出一份。',
-      confirmClearOk: '确认清空',
-      toastCleared: '已清空',
+      secDanger: '恢复出厂设置',
+      dangerHint: '清除这台设备上的所有项目、录音和设置，回到刚安装时的状态。',
+      btnClearAll: '一键恢复出厂设置',
+      confirmClearTitle: '恢复出厂设置？',
+      confirmClearBody: '会清除这台设备上的<b>全部内容</b>并回到初始状态：<br>' +
+        '· 所有项目和录音<br>' +
+        '· 已关闭的提示（隐私提示、添加到桌面提醒）<br>' +
+        '· 界面语言回到跟随系统<br>' +
+        '<b>无法恢复</b>。如果还没导出备份，建议先返回去导出一份。',
+      confirmClearOk: '确认恢复',
+      toastCleared: '已恢复出厂设置',
 
       /* 安装引导 */
       platformIos: 'iPhone / iPad（Safari）',
@@ -380,13 +384,17 @@ window.I18N = (function () {
       aboutVersion: 'Version {v}',
       aboutAuthor: 'By {a} ({id})',
       aboutTech: 'Pure front-end: no framework, no dependencies, no network requests.',
-      secDanger: 'Clear data',
-      dangerHint: 'Deletes all projects and recordings saved on this device. This cannot be undone.',
-      btnClearAll: 'Erase everything',
-      confirmClearTitle: 'Erase all data?',
-      confirmClearBody: 'All projects and recordings will be deleted, <b>irrecoverably</b>.<br>If you haven\'t exported a backup yet, go export one first.',
-      confirmClearOk: 'Erase',
-      toastCleared: 'Erased',
+      secDanger: 'Factory reset',
+      dangerHint: 'Clears all projects, recordings and settings on this device — back to the state right after install.',
+      btnClearAll: 'Reset to factory settings',
+      confirmClearTitle: 'Reset to factory settings?',
+      confirmClearBody: 'This erases <b>everything</b> on this device and returns to the initial state:<br>' +
+        '· All projects and recordings<br>' +
+        '· Dismissed notices (privacy tip, add-to-home reminder)<br>' +
+        '· Interface language back to following your system<br>' +
+        '<b>This cannot be undone.</b> If you haven\'t exported a backup yet, go export one first.',
+      confirmClearOk: 'Reset',
+      toastCleared: 'Reset complete',
 
       platformIos: 'iPhone / iPad (Safari)',
       platformAndroid: 'Android (Chrome / Edge)',
