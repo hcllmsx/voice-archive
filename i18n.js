@@ -216,7 +216,8 @@ window.I18N = (function () {
       footerNote2: '声音是生物特征，请谨慎保管导出的文件',
 
       /* 内容文案（原 content.TEXTS） */
-      privacyShort: '你的录音只存在这台设备上，我们无法访问',
+      privacyShort: '你的录音只存在这台设备上，我们无法访问，请放心使用',
+      privacyClose: '关闭提示',
       privacyLong: '录音保存在这台设备的浏览器里，不上传任何服务器，也没有任何统计和埋点。清理浏览器数据、或长时间不打开本应用，都可能导致录音丢失。建议每次录完就导出一份。',
       storageNotPersisted: '系统未授予持久化存储权限，浏览器在空间紧张时可能优先清理本应用的数据。建议勤导出备份。',
       installTitle: '添加到桌面后，录音就不会被系统清理了',
@@ -413,7 +414,8 @@ window.I18N = (function () {
       footerNote1: 'Recording someone\'s voice requires their informed consent',
       footerNote2: 'Voice is biometric data — guard the exported files carefully',
 
-      privacyShort: 'Your recordings never leave this device — we can\'t access them',
+      privacyShort: 'Your recordings never leave this device — we can\'t access them. Use with confidence.',
+      privacyClose: 'Dismiss',
       privacyLong: 'Recordings live in this device\'s browser. Nothing is uploaded to any server, no analytics, no tracking. Clearing browser data — or simply not opening the app for a long time — can cause recordings to be lost. Export a backup after each session.',
       storageNotPersisted: 'Persistent storage wasn\'t granted; the browser may clear this app\'s data first when space runs low. Export backups often.',
       installTitle: 'Add to Home screen so the system won\'t clear your recordings',
@@ -757,7 +759,7 @@ Download page (official GitHub releases):
 How to pick a version:
   Look for names containing the full package
   ("整合包"), pick the latest date, e.g.:
-  GPT-SoVITS-v2pro-20250606.7z
+  GPT-SoVITS-v2pro-20250604.7z
 
   In short:
     · Clean, high-quality recordings → use v3 or v4

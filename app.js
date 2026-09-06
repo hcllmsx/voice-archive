@@ -38,6 +38,7 @@
     openCount: 0,
     installDismissed: false,
     envDismissed: false,
+    privacyDismissed: false,
     backupMuted: false,
     sinceBackup: 0,
     raf: 0,
@@ -198,9 +199,15 @@
       '<p class="lede">' + T('heroLede') + '</p>' +
       '</section>';
 
-    html += '<section class="card privacy">' +
-      '<p class="privacy-line">' + esc(T('privacyShort')) + '</p>' +
-      '</section>';
+    // 隐私提示：可关闭，关闭状态存在 meta 里，关过就不再出现
+    if (!state.privacyDismissed) {
+      html += '<section class="card privacy">' +
+        '<div class="privacy-inner">' +
+        '<p class="privacy-line">' + esc(T('privacyShort')) + '</p>' +
+        '<button type="button" class="privacy-close" data-act="dismiss-privacy" ' +
+        'aria-label="' + esc(T('privacyClose')) + '">✕</button>' +
+        '</div></section>';
+    }
 
     html += '<section class="card resume">' +
       '<h2>' + esc(T('resumeTitle')) + '</h2>' +
@@ -1414,6 +1421,7 @@
       case 'go-install': installGuide(); break;
       case 'install-dismiss': dismissInstall(); break;
       case 'env-dismiss': dismissEnvBanner(); break;
+      case 'dismiss-privacy': dismissPrivacy(); break;
 
       case 'new-project': newProjectForm(); break;
       case 'create-project': createProject(); break;
@@ -1593,6 +1601,13 @@
     if (el) { el.hidden = true; el.innerHTML = ''; }
   }
 
+  /** 首页隐私提示：关掉后写入 meta，之后不再显示 */
+  function dismissPrivacy() {
+    state.privacyDismissed = true;
+    DB.setMeta('privacyDismissed', true);
+    render();
+  }
+
   /* ================================================================== */
   /* 初始化                                                             */
   /* ================================================================== */
@@ -1645,6 +1660,9 @@
 
     DB.getMeta('installDismissed', false).then(function (v) {
       state.installDismissed = !!v;
+      return DB.getMeta('privacyDismissed', false);
+    }).then(function (v) {
+      state.privacyDismissed = !!v;
       return DB.getMeta('openCount', 0);
     }).then(function (n) {
       state.openCount = (n || 0) + 1;

@@ -394,7 +394,7 @@ window.Content = (function () {
 
 怎么挑版本：
   找名字里带「整合包」的，找最新日期的
-  例如：GPT-SoVITS-v2pro-20250606.7z
+  例如：GPT-SoVITS-v2pro-20250604.7z
 
   简单说：
     · 录音质量很好、很干净 → 用 v3 或 v4
