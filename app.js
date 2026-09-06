@@ -1144,9 +1144,10 @@
   /* 页面 3：素材管理                                                    */
   /* ================================================================== */
 
-  /* 参考音频（标星）的时长要求：GPT-SoVITS 是硬校验，不在 3~10 秒区间内
-     会直接 raise OSError 中断推理（TTS.py：16k 采样数 < 48000 或 > 160000 就报错），
-     所以不够格的片段干脆不显示星标按钮，免得白标了。 */
+  /* 参考音频（标星）的推荐时长：GPT-SoVITS 推理时要求 3~10 秒
+     （TTS.py：16k 采样数 < 48000 或 > 160000 就报错），
+     但它在电脑上还能用「参考音频修剪」再截一段，
+     所以这里不拦着用户标星，只在导出前提醒一声。 */
   const REF_MIN_SEC = 3;
   const REF_MAX_SEC = 10;
 
@@ -1197,12 +1198,9 @@
           '<button class="btn tiny ghost" data-act="edit-clip" data-id="' + c.id + '">' + esc(T('btnEditText')) + '</button>' +
           '</span>' +
           '<span class="ops-right">' +
-          // 时长不合格的片段不给星标（已经标了的保留按钮，好在需要时能取消）
-          ((c.ref || refLengthOk(c))
-            ? '<button type="button" class="btn tiny icon-only' + (c.ref ? ' is-on' : '') + '" data-act="toggle-ref" data-id="' + c.id + '" ' +
-              'title="' + esc(c.ref ? T('btnIsRef') : T('btnSetRef')) + '" aria-label="' + esc(c.ref ? T('btnIsRef') : T('btnSetRef')) + '">' +
-              '<span aria-hidden="true">' + (c.ref ? '\u2605' : '\u2606') + '</span></button>'
-            : '') +
+          '<button type="button" class="btn tiny icon-only' + (c.ref ? ' is-on' : '') + '" data-act="toggle-ref" data-id="' + c.id + '" ' +
+          'title="' + esc(c.ref ? T('btnIsRef') : T('btnSetRef')) + '" aria-label="' + esc(c.ref ? T('btnIsRef') : T('btnSetRef')) + '">' +
+          '<span aria-hidden="true">' + (c.ref ? '\u2605' : '\u2606') + '</span></button>' +
           '<button type="button" class="btn tiny icon-only icon-del" data-act="del-clip" data-id="' + c.id + '" ' +
           'title="' + esc(T('btnDelete')) + '" aria-label="' + esc(T('btnDelete')) + '">' +
           '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
@@ -1280,8 +1278,6 @@
   function toggleRef(id) {
     const c = state.clips.filter(function (x) { return x.id === id; })[0];
     if (!c) return;
-    // 取消标星随时可以；新标星只认 3~10 秒的片段
-    if (!c.ref && !refLengthOk(c)) { toast(T('toastRefLength')); return; }
     DB.updateClip(id, { ref: !c.ref }).then(function (u) {
       for (let i = 0; i < state.clips.length; i++) {
         if (state.clips[i].id === id) state.clips[i] = u;
@@ -1383,7 +1379,7 @@
 
     html += '<section class="card">' + buttons + '</section>';
 
-    // 标了星但时长不合格的（旧数据 / 外部导入的音频）：GPT-SoVITS 会直接报错，出包前先拦一下
+    // 标了星但不在 3~10 秒内的：出包前提醒一声（电脑上还能用「参考音频修剪」补救）
     const badRefs = refs.filter(function (c) { return !refLengthOk(c); });
 
     if (!isArchive) {
