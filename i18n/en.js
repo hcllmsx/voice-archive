@@ -153,7 +153,7 @@
       exportTotal: 'Total {total}',
       tooShortHint: ' · A bit short — record some more',
       fTargetPath: 'Folder where the training data should live (the base folder)',
-      targetPathHint: 'Enter the folder that should hold your training data on the computer. For example, if your GPT-SoVITS package is in D:\\GPT-SoVITS\\, enter D:\\GPT-SoVITS\\. When you export a training pack, a VoiceArchive-<model name> folder is created inside it automatically (the model name you entered when creating the project, e.g. nainai), and every line of dataset.list is written against that folder. Unzip the pack into VoiceArchive-<model name> and you\'re ready to train. Avoid non-ASCII characters and spaces in the base path.',
+      targetPathHint: 'Base folder where recordings live on the computer. If GPT-SoVITS is at D:\\GPT-SoVITS\\, enter that. Export creates a VoiceArchive-<model> subfolder — unzip the pack into it and train. Prefer ASCII paths with no spaces.',
       exportPathNote: 'This training pack writes every dataset.list line against: {path}. When unzipping, unzip into the VoiceArchive-<model name> folder. The base folder is a global setting (Settings → Computer target path) shared by all projects.',
       btnExportArchive: 'Export audio archive',
       btnAlsoFull: 'Also export a training pack',

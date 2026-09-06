@@ -153,7 +153,7 @@
       exportTotal: '总时长 {total}',
       tooShortHint: ' · 还偏少，建议再录一些',
       fTargetPath: '训练数据要放在电脑的哪个文件夹（基础目录）',
-      targetPathHint: '这里填「录音数据要存放在电脑的哪个文件夹」。例如你的 GPT-SoVITS 整合包在 D:\\GPT-SoVITS\\，就填 D:\\GPT-SoVITS\\。导出训练包时，会自动在这个文件夹下新建 VoiceArchive-模型名 文件夹（模型名 = 新建项目时填的模型名，比如 nainai），dataset.list 里每句录音都会写成这个文件夹里的绝对路径。到时候把 zip 解压到 VoiceArchive-模型名 文件夹里就能训练。基础路径里尽量不要有中文和空格。',
+      targetPathHint: '录音数据在电脑上放哪个文件夹。GPT-SoVITS 装在哪就填哪，如 D:\\GPT-SoVITS\\。导出训练包时会自动新建 VoiceArchive-模型名 子文件夹，把 zip 解压到它里面就能训练。路径尽量别用中文和空格。',
       exportPathNote: '这次训练包的录音会按这个路径写进 dataset.list：{path}。解压 zip 时请解压到 VoiceArchive-模型名 文件夹里。基础文件夹在「设置 → 电脑目标路径」改，所有项目共用。',
       btnExportArchive: '导出音频存档包',
       btnAlsoFull: '也导出一份训练包',
