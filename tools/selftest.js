@@ -5,12 +5,20 @@
  */
 'use strict';
 
+const fs = require('fs');
+const path = require('path');
+const root = path.join(__dirname, '..');
+
 // 最小垫片，让浏览器脚本能在 Node 里加载
 if (typeof globalThis.window === 'undefined') globalThis.window = globalThis;
 if (typeof globalThis.navigator === 'undefined') {
   Object.defineProperty(globalThis, 'navigator', { value: {}, configurable: true });
 }
 
+// 语言包 → 多语言核心 → 内容结构层（顺序与 index.html 一致）
+require('../i18n/zh.js');
+require('../i18n/en.js');
+require('../i18n/core.js');
 require('../content.js');
 require('../db.js');       // 只验证能加载；IndexedDB 相关逻辑不在 Node 里跑
 require('../zip.js');
@@ -19,6 +27,11 @@ require('../recorder.js');
 const C = window.Content;
 const ZIP = window.ZIP;
 const VR = window.VoiceRecorder;
+const ZH = window.I18N_LANGS.zh.guide;
+const EN = window.I18N_LANGS.en.guide;
+
+// 独立文档（导出包里「接下来怎么做.txt」的来源）
+const NEXT_STEPS_ZH = fs.readFileSync(path.join(root, 'nextsteps', 'next-steps.zh.txt'), 'utf8');
 
 let failed = 0;
 function check(name, cond) {
@@ -28,20 +41,66 @@ function check(name, cond) {
 
 /* ---------------- 1. 内容完整性 ---------------- */
 console.log('\n[content]');
-check('NEXT_STEPS 含路径 D:\\voice', C.NEXT_STEPS.includes('D:\\voice'));
-check('NEXT_STEPS 含 GPT-SoVITS-v2pro-xxx\\GPT_weights\\', C.NEXT_STEPS.includes('GPT-SoVITS-v2pro-xxx\\GPT_weights\\'));
-check('NEXT_STEPS 反斜杠未被转义成垂直制表符', !C.NEXT_STEPS.includes('\x0b'));
-check('NEXT_STEPS 完整（含结尾祝福）', C.NEXT_STEPS.includes('祝你顺利'));
-check('5 个年龄段', C.AGE_GROUPS.length === 5);
-const qCounts = C.AGE_GROUPS.map(g => g.questions.length).join(',');
-check('引导问题数量 10,10,9,9,9 → ' + qCounts, qCounts === '10,10,9,9,9');
+check('中文说明文档含路径 D:\\voice', NEXT_STEPS_ZH.includes('D:\\voice'));
+check('中文说明文档含权重保存路径', NEXT_STEPS_ZH.includes('GPT-SoVITS-v2pro-xxx\\GPT_weights\\'));
+check('说明文档反斜杠未被转义成垂直制表符', !NEXT_STEPS_ZH.includes('\x0b'));
+check('中文说明文档完整（含结尾祝福）', NEXT_STEPS_ZH.includes('祝你顺利'));
+
+const AGE_IDS = C.AGE_GROUPS.map(g => g.id).join(',');
+check('5 个年龄段 → ' + AGE_IDS, AGE_IDS === 'toddler,child,teen,adult,elder');
+
+const qCounts = C.AGE_GROUPS.map(g => ZH.ageGroups[g.id].questions.length).join(',');
+check('中文引导问题数量 10,10,9,9,9 → ' + qCounts, qCounts === '10,10,9,9,9');
+
+check('中文必录清单 6 组', ZH.checklist.length === 6);
 const taskCounts = C.AGE_GROUPS.map(g => C.buildTasks(g.id).length);
 console.log('  任务总数：' + taskCounts.join(', '));
-check('必录清单 6 组', C.CHECKLIST.length === 6);
 check('每组任务数一致（16 条必录）',
-  C.AGE_GROUPS.every(g => C.buildTasks(g.id).length - g.questions.length === 16));
+  C.AGE_GROUPS.every(g => C.buildTasks(g.id).length - ZH.ageGroups[g.id].questions.length === 16));
 check('任务 id 无重复',
   C.AGE_GROUPS.every(g => new Set(C.buildTasks(g.id).map(t => t.id)).size === C.buildTasks(g.id).length));
+
+/* 中英语言包结构对齐（防漏翻 / 组错位） */
+check('英文年龄段的引导问题数量与中文一致',
+  C.AGE_GROUPS.every(g => EN.ageGroups[g.id] && EN.ageGroups[g.id].questions.length === ZH.ageGroups[g.id].questions.length));
+check('英文必录清单与中文结构一致（组顺序 / 任务数）',
+  EN.checklist.length === ZH.checklist.length &&
+  EN.checklist.every((e, i) => e.id === ZH.checklist[i].id && e.tasks.length === ZH.checklist[i].tasks.length));
+check('英文语言选项齐全',
+  Object.keys(EN.languages).join(',') === Object.keys(ZH.languages).join(','));
+check('T 取到界面文案（zh/en 任一）', ['Voice Archive', '声音留档'].indexOf(window.I18N.T('appTitle')) >= 0);
+check('T 缺 key 回退 key 本身', window.I18N.T('__no_such_key__') === '__no_such_key__');
+
+/* 引导任务组装：英文引导 + 中文界面混排 */
+{
+  const zhOnly = C.buildTasks('elder', '', 'zh', 'zh');
+  const enGuideZhUi = C.buildTasks('elder', '', 'en', 'zh');
+  check('英文引导的任务数与中文一致', enGuideZhUi.length === zhOnly.length);
+  check('英文引导的问题为英文', C.buildTasks('elder', '', 'en', 'en').some(t => /house|child|spouse|work/i.test(t.label)));
+  check('界面中文时聊天组标题为中文',
+    C.buildTasks('elder', '', 'en', 'zh').some(t => t.group === 'guide' && t.groupTitle === '聊一聊'));
+
+  const dZh = C.buildTasks('elder', '四川话', 'zh', 'zh');
+  const firstDialect = dZh.findIndex(function (t) { return t.id.indexOf('must.dialect.') === 0; });
+  const firstCatch = dZh.findIndex(function (t) { return t.id.indexOf('must.catchphrase.') === 0; });
+  check('方言组前移（call 3 句之后紧接方言，且先于口头禅）', firstDialect === 3 && firstCatch > firstDialect);
+  check('方言组提示含方言（中文界面）',
+    C.buildTasks('elder', '四川话', 'en', 'zh').some(t => t.id === 'must.dialect.0' && t.tip.indexOf('四川话') >= 0));
+  check('方言组提示含方言（英文界面）',
+    C.buildTasks('elder', 'Sichuanese', 'en', 'en').some(t => t.id === 'must.dialect.0' && t.tip.indexOf('Sichuanese') >= 0));
+}
+check('方言提示（中文）', C.dialectNote('四川话', 'zh').indexOf('普通话') >= 0);
+check('方言提示（英文）', C.dialectNote('Sichuanese', 'en').indexOf('Mandarin') >= 0);
+check('语言元数据 train', C.trainCode('zh-dialect') === 'zh' && C.trainCode('yue') === 'yue');
+check('语言合并 label（中/英）',
+  C.language('zh', 'zh').label === '中文（普通话）' && C.language('zh', 'en').label === 'Chinese (Mandarin)');
+check('语言合并 dialectable', C.language('zh-dialect', 'zh').dialectable === true);
+check('用途合并（中/英）',
+  C.purpose('archive', 'zh').label === '只是想把声音存下来' && C.purpose('archive', 'en').label === 'Just preserve the voice');
+check('年龄段合并（中/英）',
+  C.ageGroup('elder', 'zh').label === '长辈' && C.ageGroup('elder', 'en').label === 'Elder');
+check('引导语言映射：en→en / ja→zh',
+  window.I18N.guideLang('en') === 'en' && window.I18N.guideLang('ja') === 'zh' && window.I18N.guideLang('zh') === 'zh');
 
 /* ---------------- 2. ZIP 打包 → 解包 ---------------- */
 console.log('\n[zip round-trip]');
@@ -51,7 +110,7 @@ console.log('\n[zip round-trip]');
   const wavBytes = new Uint8Array(1000);
   for (let i = 0; i < wavBytes.length; i++) wavBytes[i] = i & 0xFF;
   zip.add('wavs/0001.wav', wavBytes);
-  zip.add('接下来怎么做.txt', C.NEXT_STEPS);
+  zip.add('接下来怎么做.txt', NEXT_STEPS_ZH);
   zip.add('dataset.list', 'E:\\voice\\wavs\\0001.wav|nainai|zh|你好\n');
   zip.add('project.json', JSON.stringify({ app: 'voice-archive', ok: true }));
 
@@ -70,7 +129,7 @@ console.log('\n[zip round-trip]');
       wavBack.every((b, i) => b === wavBytes[i]));
 
     const txtBack = new TextDecoder('utf-8').decode(ZIP.find(entries, '接下来怎么做.txt'));
-    check('中文文本一致', txtBack === C.NEXT_STEPS);
+    check('中文文本一致（与独立 txt 文件）', txtBack === NEXT_STEPS_ZH);
 
     const listBack = new TextDecoder('utf-8').decode(ZIP.find(entries, 'dataset.list'));
     check('dataset.list 一致', listBack === 'E:\\voice\\wavs\\0001.wav|nainai|zh|你好\n');
@@ -99,7 +158,7 @@ function testInflate() {
 
   // 三种数据：纯文本（高压缩）、伪随机（接近存储块）、重复模式（长距离匹配）
   const cases = {
-    'text-200kb': Buffer.from((C.NEXT_STEPS + '\n').repeat(60), 'utf-8'),
+    'text-200kb': Buffer.from((NEXT_STEPS_ZH + '\n').repeat(60), 'utf-8'),
     'random-64kb': (function () {
       let seed = 12345;
       const b = Buffer.alloc(65536);

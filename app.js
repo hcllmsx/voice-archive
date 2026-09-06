@@ -1211,22 +1211,29 @@
     toast(T('toastPacking'));
     // 让浏览器先把 toast 画出来，再做重活
     setTimeout(function () {
-      readClips().then(function (items) {
-        if (!items.length) { toast(T('toastNoAudioExport')); return null; }
-        const built = buildZip(mode, items);
-        const blob = built.zip.build();
-        state.lastZip = { blob: blob, name: built.name };
-        return DB.updateProject(p.id, {
-          targetPath: built.base,
-          exportCount: built.batch,
-          lastExportAt: Date.now(),
-          lastBackupCount: state.clips.length
-        }).then(function (upd) {
-          if (upd) state.project = upd;
-          state.sinceBackup = 0;
-          state.backupMuted = false;
-          render();
-          presentZip(blob, built.name);
+      // 完整训练包要带「接下来怎么做.txt」：先确保文档已就绪（离线时走 SW 缓存）
+      const ready = (mode === 'full' && I18N.ensureNextSteps)
+        ? I18N.ensureNextSteps(I18N.getUiLang())
+        : Promise.resolve(true);
+      ready.then(function (ok) {
+        if (!ok) { toast(T('nextStepsUnavailable')); return null; }
+        return readClips().then(function (items) {
+          if (!items.length) { toast(T('toastNoAudioExport')); return null; }
+          const built = buildZip(mode, items);
+          const blob = built.zip.build();
+          state.lastZip = { blob: blob, name: built.name };
+          return DB.updateProject(p.id, {
+            targetPath: built.base,
+            exportCount: built.batch,
+            lastExportAt: Date.now(),
+            lastBackupCount: state.clips.length
+          }).then(function (upd) {
+            if (upd) state.project = upd;
+            state.sinceBackup = 0;
+            state.backupMuted = false;
+            render();
+            presentZip(blob, built.name);
+          });
         });
       }).catch(function (e) {
         toast(T('toastPackFail', { msg: e && e.message ? e.message : '-' }));
@@ -1831,6 +1838,10 @@
 
     // 第 1 层：申请持久化存储（静默，不打扰）
     initPersistence().then(function (ok) { state.persisted = !!ok; });
+
+    // 预载「接下来怎么做.txt」（zh / en），导出打包时直接可用；
+    // 失败也没关系，导出前 ensureNextSteps 还会再兜底一次
+    if (I18N.preloadNextSteps) I18N.preloadNextSteps().catch(function () {});
 
     // Service Worker：离线缓存
     if ('serviceWorker' in navigator) {

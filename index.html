@@ -36,8 +36,11 @@
 </noscript>
 
 <!-- 无框架、无构建工具，按依赖顺序加载 -->
+<!-- 语言包（每语言一个文件）→ 多语言核心 → 业务脚本 -->
+<script src="i18n/zh.js"></script>
+<script src="i18n/en.js"></script>
+<script src="i18n/core.js"></script>
 <script src="content.js"></script>
-<script src="i18n.js"></script>
 <script src="db.js"></script>
 <script src="zip.js"></script>
 <script src="recorder.js"></script>

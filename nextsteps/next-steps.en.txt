@@ -1,0 +1,352 @@
+================================================
+     Voice Archive · What to do next
+================================================
+
+You've just finished the most important, irreplaceable step:
+recording their voice.
+
+All that's left is turning these recordings into a model
+that can speak. No coding needed — just follow along.
+
+Estimated time: 40 minutes ~ 2 hours
+(most of it is the computer running on its own — go do
+ something else meanwhile)
+
+
+================================================
+Before you start: can your computer handle it?
+================================================
+
+[Required]
+A Windows PC with an NVIDIA graphics card, 8GB+ of VRAM.
+
+How to check your GPU:
+  Press Ctrl + Shift + Esc to open Task Manager
+  → Click "Performance"
+  → Find "GPU" on the left
+  → Top-right shows the GPU model and VRAM
+
+  If you see an N-card (GTX / RTX prefix), you're fine.
+  The VRAM line needs to be above 8GB.
+
+[Required]
+At least 30GB of free disk space.
+
+[Note]
+Macs work too, but training quality will be noticeably
+worse. If possible, borrow a Windows laptop instead.
+
+[Note]
+If your computer has no dedicated GPU (integrated only),
+training won't run. Ask a friend with a gaming PC,
+or rent a cloud GPU.
+
+
+================================================
+Step 0: Get the recordings onto the computer
+================================================
+
+What you exported from your phone is a ZIP file.
+
+If you shared it to WeChat "File Transfer":
+  Open WeChat on the computer
+  → Find "File Transfer"
+  → Download the ZIP file
+
+Once downloaded, unzip it into a folder.
+
+  ⚠️ Important: the extracted folder path must NOT
+     contain Chinese characters or spaces!
+
+  Recommended: create an English-named folder directly
+  on a drive root, e.g. D:\voice
+
+  After unzipping, the structure should look like:
+    D:\voice\
+      ├── wavs\          a bunch of wav audio files
+      ├── dataset.list   the transcription file
+      ├── references\    reference audio
+      └── NEXT-STEPS.txt   what you're reading now
+
+  Not recommended (Chinese + spaces, may cause errors):
+    D:\My Files\Voice Backup\Recordings\
+
+
+================================================
+Step 1: Download the software (~20 min, depends on speed)
+================================================
+
+The software is called GPT-SoVITS. It's open source
+and free, made by Bilibili creator "Hua Er Bu Ku"
+(花儿不哭).
+
+Download page (official GitHub releases):
+  https://github.com/RVC-Boss/GPT-SoVITS/releases
+
+How to pick a version:
+  Look for names containing the full package
+  ("整合包"), pick the latest date, e.g.:
+  GPT-SoVITS-v2pro-20250604.7z
+
+  In short:
+    · Clean, high-quality recordings → use v3 or v4
+    · Some noise, or not sure → use v2pro (safer)
+    · Undecided → pick v2pro, it's the most forgiving
+
+Official full tutorial (Chinese, Yuque docs):
+  https://www.yuque.com/baicaigongchang1145haoyuangong/ib3g1e
+
+If GitHub is slow or unreachable, search "花儿不哭" on
+Bilibili — the profile page has mirror downloads and
+detailed video tutorials.
+
+What you download is an archive. Unzip it.
+Again, no Chinese characters or spaces in the path,
+e.g. D:\GPT-SoVITS
+
+
+================================================
+Step 2: Launch it (~3 min)
+================================================
+
+In the extracted folder, find this file:
+
+  go-webui.bat
+
+Double-click it.
+
+A black console window will pop up and start loading.
+The first launch is slow — a few minutes is normal.
+
+  ⚠️ Do NOT close that black window!
+     Closing it stops the software.
+
+When loaded, a browser page opens automatically.
+If it doesn't, open your browser and type:
+
+  http://localhost:9874
+
+If you can see the interface, you're good.
+
+
+================================================
+Step 3: Format the training set (~5 min)
+================================================
+
+This step lets the computer "understand" your
+recordings and prepares them for training.
+You only type paths and click buttons.
+
+1. Switch to the "1-GPT-SoVITS-TTS" tab at the top
+
+2. Find "1A-训练集格式化工具" (training set formatter)
+
+3. Fill in the experiment/model name
+   Use English letters or numbers only, no Chinese
+   e.g.: zhangsan
+
+4. Fill in the "文本标注文件" (transcription file) path
+   That's the dataset.list you just unzipped
+   e.g.: D:\voice\dataset.list
+
+5. Fill in the "训练集音频文件夹路径" (audio folder) path
+   That's the wavs folder you just unzipped
+   e.g.: D:\voice\wavs
+
+6. Check "开启训练集格式化一键三连"
+   (enable the one-click format trio)
+
+7. Click "一键三连" (one-click trio)
+
+Then wait. Progress shows at the bottom.
+When you see something like "格式化完毕"
+(formatting complete), you're done.
+
+  ⚠️ If this step errors out, 99% of the time it's
+     because the path has Chinese characters or spaces.
+     Go back to Step 0 and pick a pure-English path.
+
+
+================================================
+Step 4: Train the model (~20 min ~ 1 hour)
+================================================
+
+Switch to the "1B-微调训练" (fine-tuning) tab.
+
+Two models get trained, in order — don't flip them:
+
+  ───────────────────────────────
+  First: SoVITS
+  ───────────────────────────────
+  1. Click "开始 SoVITS 训练" (start SoVITS training)
+  2. Keep the default epoch count (usually 8)
+  3. Wait for the completion message
+
+  ───────────────────────────────
+  Then: GPT
+  ───────────────────────────────
+  4. Click "开始 GPT 训练" (start GPT training)
+  5. Keep the default epoch count (usually 15)
+  6. Wait for the completion message
+
+  ⚠️⚠️ THE most important warning ⚠️⚠️
+
+  Do NOT crank epochs up to 50 or 100 thinking
+  "more training = better"!
+
+  Too many epochs causes "overfitting" — the model
+  memorizes the recordings, then can't say anything
+  new, and produces metallic buzz, cracks and glitches.
+
+  The defaults are already the best. Leave them alone.
+
+  ───────────────────────────────
+  If you hit "out of memory" (显存不足)
+  ───────────────────────────────
+  Lower the batch_size (e.g. 8 → 4, then 2 if needed)
+  and start training again.
+  It'll be slower, but it will finish.
+
+
+================================================
+Step 5: Test it — make them speak (~2 min)
+================================================
+
+Switch to the "1C-推理" (inference) tab.
+
+1. Click "刷新模型路径" (refresh model paths)
+   In the GPT model dropdown, pick the one you just
+   trained (its name contains e.g. zhangsan)
+   Same for the SoVITS model dropdown.
+
+2. Upload a reference audio
+   Click upload, pick any wav from the references
+   folder (the ones you starred as reference candidates
+   on your phone).
+
+3. Fill in "参考音频的文本" (reference audio text)
+   Type exactly, word for word, what that reference
+   clip says. This matters — it noticeably improves
+   similarity.
+
+4. Pick "参考音频的语种" (reference audio language).
+   For English recordings, choose English (英文).
+
+5. In "需要合成的文本" (text to synthesize), type
+   what you want them to say.
+   e.g.: The weather is nice today. Shall we go out?
+
+6. Click "合成语音" (synthesize speech)
+
+Wait a few seconds — and you'll hear them.
+
+  💡 Want a different mood? Just swap the reference
+     audio — no retraining needed.
+     Happy reference → happy voice.
+     Gentle reference → gentle voice.
+
+  💡 Remember: whatever emotion the reference audio
+     carries is the emotion the output speaks with.
+
+
+================================================
+FAQ
+================================================
+
+Q: The voice doesn't sound quite like them?
+
+  Don't rush to retrain. Check in order:
+
+  1. Try a different reference audio (works fastest)
+  2. Is the reference audio text filled in exactly?
+  3. Is total recording long enough? 1 minute is the
+     floor; 5+ minutes is much better
+  4. Any background noise? Noise drags everything down
+  5. Try the v2pro build — more forgiving of source
+     quality
+
+
+Q: Metallic buzz, glitchy artifacts, cracking?
+
+  Too many training epochs — the model overfitted.
+  Go back to Step 4 and retrain with fewer epochs
+  (SoVITS: 4–8). Or switch to the v2pro build.
+
+
+Q: It stalls mid-sentence / loops the same phrase?
+
+  The input is too long. Split long text into short
+  sentences and synthesize one at a time.
+  In the "how to cut" option, choose "split by
+  punctuation".
+
+
+Q: The software won't open / keeps erroring?
+
+  1. Check the path for Chinese characters and spaces
+     (this fixes most problems)
+  2. Check you actually unzipped it before running
+  3. Check your GPU driver isn't ancient — update the
+     NVIDIA driver
+  4. See the troubleshooting section of the official
+     tutorial
+
+
+Q: Power cut mid-training / accidentally closed the
+window?
+
+  It's fine — just run it again.
+  The recordings you made are safe (they're in
+  D:\voice); you'll just need to redo Steps 3 and 4.
+
+
+================================================
+Important: back up the trained model
+================================================
+
+After training, the model files live in these two spots
+inside the package folder:
+
+  GPT-SoVITS-v2pro-xxx\GPT_weights\
+  GPT-SoVITS-v2pro-xxx\SoVITS_weights\
+
+Find the two files whose names contain your model name
+(e.g. zhangsan), and copy them to cloud storage or an
+external drive.
+
+Those two files ARE "their voice" — hours of recordings
+condensed into two files.
+
+  ⚠️ If you reinstall the OS or delete the package
+     folder, the model is gone and must be retrained
+     from scratch. Back it up.
+
+
+================================================
+Last: about this whole thing
+================================================
+
+The technical part ends here.
+
+But a few words before you go:
+
+These recordings are evidence that this person truly
+existed. The way they said your name, the way they
+laughed, the little phrases they always used —
+all of it is preserved now.
+
+Please guard these files carefully.
+Voice is biometric data, the same category as
+fingerprints and faces.
+
+If you plan to let family use this model too,
+it's worth telling everyone up front that it exists,
+and who is allowed to use it.
+
+
+================================================
+  Good luck.
+  If you get stuck, search "花儿不哭" on Bilibili —
+  the comments under his videos are full of helpful
+  people.
+================================================
