@@ -113,7 +113,6 @@
       crumbExport: 'Export ›',
       statLine: '<b>{n}</b> clips · <b>{total}</b> in total',
       statHint: '1 minute is the bare minimum; 5+ minutes is much better',
-      importAudioBtn: 'Import existing audio (WeChat voice, old recordings)',
       noClips: 'No clips yet.',
       importedAudio: 'Imported audio',
       clipMissing: 'Audio missing — needs re-recording',
@@ -133,8 +132,6 @@
       toastNoAudio: 'This clip has no audio — re-record it',
       toastPlayFail: 'Playback failed',
       toastImportedClip: 'Imported audio — delete it and re-record via its task',
-      toastProcessingN: 'Processing {n} file(s)…',
-      toastImportDone: 'Import done',
 
       /* 导出页 */
       crumbClipsBack: '‹ Clips',

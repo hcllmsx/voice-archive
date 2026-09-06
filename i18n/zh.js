@@ -113,7 +113,6 @@
       crumbExport: '导出 ›',
       statLine: '共 <b>{n}</b> 段 · 总时长 <b>{total}</b>',
       statHint: '1 分钟只是最低要求，5 分钟以上会好很多',
-      importAudioBtn: '从手机导入已有音频（微信语音、旧录音）',
       noClips: '还没有素材。',
       importedAudio: '导入的音频',
       clipMissing: '音频缺失，需要重录',
@@ -133,8 +132,6 @@
       toastNoAudio: '这段没有音频，需要重录',
       toastPlayFail: '播放失败',
       toastImportedClip: '这是导入的音频，删掉后用对应任务重录',
-      toastProcessingN: '正在处理 {n} 个文件…',
-      toastImportDone: '导入完成',
 
       /* 导出页 */
       crumbClipsBack: '‹ 素材',

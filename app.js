@@ -1085,11 +1085,6 @@
 
     if (g.kid) html += '<section class="card">' + stickerRow(state.clips.length) + '</section>';
 
-    html += '<section class="card">' +
-      '<label class="btn ghost block file-btn">' + esc(T('importAudioBtn')) +
-      '<input type="file" accept="audio/*" multiple data-act="import-audio"></label>' +
-      '</section>';
-
     if (!state.clips.length) {
       html += '<section class="card"><p class="muted empty">' + esc(T('noClips')) + '</p></section>';
     } else {
@@ -1221,33 +1216,6 @@
     } else {
       toast(T('toastImportedClip'));
     }
-  }
-
-  function importAudio(files) {
-    const list = Array.prototype.slice.call(files || []);
-    if (!list.length) return;
-    toast(T('toastProcessingN', { n: list.length }));
-    const jobs = list.map(function (file) {
-      return VR.decodeFile(file).then(function (res) {
-        return DB.addClip({
-          projectId: state.project.id,
-          taskId: '',
-          taskLabel: file.name,
-          group: 'import',
-          text: '',
-          blob: res.blob,
-          duration: res.duration,
-          rate: VR.TARGET_RATE,
-          ref: false,
-          source: 'import'
-        }).then(function (c) { state.clips.push(c); });
-      }).catch(function () { /* 跳过读不出来的文件 */ });
-    });
-    Promise.all(jobs).then(function () {
-      state.clips.sort(function (a, b) { return a.ts - b.ts; });
-      render();
-      toast(T('toastImportDone'));
-    });
   }
 
   /* ================================================================== */
@@ -1929,9 +1897,6 @@
         const act = el.getAttribute('data-act');
         if (act === 'import') {
           if (el.files && el.files[0]) handleImport(el.files[0]);
-          el.value = '';
-        } else if (act === 'import-audio') {
-          importAudio(el.files);
           el.value = '';
         }
         return;
