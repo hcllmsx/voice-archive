@@ -158,6 +158,32 @@ h1, h2, h3 {
   border-color: transparent;
 }
 
+/* 「继续上次录制」默认折叠，点标题展开
+   选择器用三级特异性，压过 .btn.block 的 display:block / margin-top */
+.resume .btn.resume-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 0;
+  text-align: left;
+}
+
+.resume-arrow {
+  flex: none;
+  font-size: 15px;
+  line-height: 1;
+  opacity: 0.55;
+  transition: transform 0.18s ease;
+}
+
+.resume.open .resume-arrow { transform: rotate(90deg); }
+
+.resume .muted {
+  margin: 12px 0 0;
+  font-size: 14px;
+}
+
 /* 项目列表 */
 .proj-list {
   list-style: none;

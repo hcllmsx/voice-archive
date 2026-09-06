@@ -44,6 +44,7 @@
     raf: 0,
     lastZip: null,
     showTaskList: false,
+    showResume: false,
     _shareFn: null,
     _dlFn: null
   };
@@ -209,13 +210,6 @@
         '</div></section>';
     }
 
-    html += '<section class="card resume">' +
-      '<h2>' + esc(T('resumeTitle')) + '</h2>' +
-      '<p class="muted">' + esc(T('resumeHint')) + '</p>' +
-      '<label class="btn primary block file-btn">' + esc(T('pickBackup')) +
-      '<input type="file" accept=".zip,.json,application/zip,application/json" data-act="import"></label>' +
-      '</section>';
-
     html += '<section class="card"><h2>' + esc(T('myProjects')) + '</h2>';
     if (!state.projects.length) {
       html += '<p class="muted empty">' + esc(T('noProjects')) + '</p>';
@@ -249,6 +243,20 @@
     }
     html += '<button class="btn primary block" data-act="new-project">' + esc(T('btnNewProject')) + '</button>';
     html += '</section>';
+
+    // 继续上次录制：默认折叠，点一下才展开（多数时候用不上，别占地方）
+    html += '<section class="card resume' + (state.showResume ? ' open' : '') + '">' +
+      '<button type="button" class="btn ghost block resume-toggle" data-act="toggle-resume"' +
+      ' aria-expanded="' + (state.showResume ? 'true' : 'false') + '">' +
+      '<span>' + esc(T('resumeTitle')) + '</span>' +
+      '<span class="resume-arrow" aria-hidden="true">›</span>' +
+      '</button>' +
+      (state.showResume
+        ? '<p class="muted">' + esc(T('resumeHint')) + '</p>' +
+          '<label class="btn primary block file-btn">' + esc(T('pickBackup')) +
+          '<input type="file" accept=".zip,.json,application/zip,application/json" data-act="import"></label>'
+        : '') +
+      '</section>';
 
     html += '<section class="card">' +
       '<button class="btn ghost block" data-act="go-settings">' + esc(T('btnSettings')) + '</button>' +
@@ -1468,6 +1476,7 @@
       case 'rerecord': rerecord(); break;
       case 'confirm-clip': confirmClip(); break;
       case 'toggle-tasks': state.showTaskList = !state.showTaskList; render(); break;
+      case 'toggle-resume': state.showResume = !state.showResume; render(); break;
       case 'jump': state.pending = null; state.cursor = parseInt(el.getAttribute('data-i'), 10); render(); break;
 
       case 'play': playClip(el.getAttribute('data-id')); break;
