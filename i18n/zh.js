@@ -92,7 +92,6 @@
       customTitle: '想再多录一句',
       fCustomText: '这句话的文字',
       phCustomText: '输入这句要说的话…',
-      customHint: '自己补的句子不用问题也不用提示，照着读、直接录。录完的文字会先帮你填好，不满意可再改。',
       btnAddCustomOk: '添加这句',
       toastCustomEmpty: '先输入要录的话，再点添加',
       toastCustomAdded: '已加入队列，点「开始录音」就能录',

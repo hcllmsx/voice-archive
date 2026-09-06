@@ -776,7 +776,9 @@
       esc(state.showTaskList
         ? T('hideAllLines')
         : T('showAllLines', { n: total })) + '</button>' +
-      (canAddCustom
+      // 折叠时「＋ 新增一句」排在收起/展开按钮的下面一行；
+      // 展开后放到清单底部（所有句子的下面），避免和顶部按钮挤在一起。
+      (canAddCustom && !state.showTaskList
         ? '<button class="btn ghost add-custom-btn" data-act="add-custom">' + esc(T('btnAddCustom')) + '</button>'
         : '') +
       '</div>';
@@ -800,6 +802,12 @@
           '</div></li>';
       });
       html += '</ul>';
+      // 展开清单后，把「＋ 新增一句」放在所有句子的下面
+      if (canAddCustom) {
+        html += '<div class="tc-footer">' +
+          '<button class="btn ghost add-custom-btn" data-act="add-custom">' + esc(T('btnAddCustom')) + '</button>' +
+          '</div>';
+      }
     }
     html += '</section>';
 
@@ -978,7 +986,6 @@
       '<div class="form">' +
       '<label class="field"><span>' + esc(T('fCustomText')) + '</span>' +
       '<textarea id="f-custom-text" rows="3" maxlength="200" placeholder="' + esc(T('phCustomText')) + '"></textarea></label>' +
-      '<p class="muted small">' + esc(T('customHint')) + '</p>' +
       '</div>' +
       '<div class="modal-actions">' +
       '<button class="btn ghost" data-act="modal-close">' + esc(T('btnCancel')) + '</button>' +

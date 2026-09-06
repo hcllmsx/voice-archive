@@ -912,10 +912,20 @@ textarea { resize: vertical; }
 .tl-text { flex: 1; }
 .tl-dur { font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
 
-/* 任务卡顶部的操作行：「查看全部句子」+「＋ 新增一句」并排 */
-.tc-actions { display: flex; gap: 8px; }
-.tc-actions .btn { flex: 1 1 0; min-width: 0; }
-.tc-actions .add-custom-btn { flex: 0 0 auto; }
+/* 任务卡顶部的操作区：展开/收起按钮独占一行，保持全局 .btn 的大按钮观感；
+   折叠时「＋ 新增一句」排在其下面一行，展开后移到清单末尾（见 .tc-footer）。 */
+.tc-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.tc-actions .btn,
+.tc-footer .btn {
+  display: block;
+  width: 100%;
+}
+/* 清单展开后，底部的「＋ 新增一句」与列表隔开一点 */
+.tc-footer { margin-top: 10px; }
 
 /* 自定义句在清单里的行：跳转按钮让位，右侧留移除按钮 */
 .task-row { display: flex; align-items: center; }

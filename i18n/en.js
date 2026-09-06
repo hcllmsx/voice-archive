@@ -92,7 +92,6 @@
       customTitle: 'Add one more line',
       fCustomText: 'Line text',
       phCustomText: 'Type the line you want to record…',
-      customHint: 'No prompt needed — it\'s your own line. Read it and record. The transcript is pre-filled and editable.',
       btnAddCustomOk: 'Add line',
       toastCustomEmpty: 'Type the line first',
       toastCustomAdded: 'Line added — tap Start to record it',
