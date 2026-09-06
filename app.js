@@ -154,16 +154,34 @@
       state.countdown = 0;
     }
     state.view = view;
-    if (location.hash !== '#/' + view) {
-      history.replaceState(null, '', '#/' + view);
+    const path = pathFor(view);
+    if (location.hash !== path) {
+      history.replaceState(null, '', path);
     }
     render();
     window.scrollTo(0, 0);
   }
 
+  /** 某视图的完整路径：项目内页面（record/manage/export）带上当前项目 id，供刷新后恢复 */
+  function pathFor(view) {
+    const inProject = (view === 'record' || view === 'manage' || view === 'export') && state.project;
+    return inProject ? '#/' + view + '/' + encodeURIComponent(state.project.id) : '#/' + view;
+  }
+
   function routeFromHash() {
-    const v = (location.hash || '').replace('#/', '');
-    return ['home', 'record', 'manage', 'export', 'settings'].indexOf(v) >= 0 ? v : 'home';
+    const parts = (location.hash || '').replace(/^#\//, '').split('/');
+    const v = ['home', 'record', 'manage', 'export', 'settings'].indexOf(parts[0]) >= 0 ? parts[0] : 'home';
+    return { view: v, projectId: parts[1] ? decodeURIComponent(parts[1]) : null };
+  }
+
+  /** 刷新后恢复：hash 指向项目内页面时，异步把项目拉回来并停在原页面；
+      项目不存在 / 数据不兼容 / 读取失败 → 留在首页（有故障就回家） */
+  function restoreRoute(route) {
+    if (!route.projectId) return;
+    DB.getProject(route.projectId).then(function (p) {
+      if (!p || !C.projectCompatible(p)) return;
+      return openProject(p, route.view);
+    }).catch(function () {});
   }
 
   function render() {
@@ -580,7 +598,7 @@
     return n;
   }
 
-  function openProject(p) {
+  function openProject(p, view) {
     state.project = p;
     state.tasks = buildProjectTasks(p);
     state.pending = null;
@@ -590,7 +608,7 @@
     return DB.getClips(p.id).then(function (clips) {
       state.clips = clips;
       state.cursor = firstIncomplete();
-      go('record');
+      go(view || 'record');
       maybeShowRecGuide();
     });
   }
@@ -1933,7 +1951,7 @@
     });
 
     window.addEventListener('hashchange', function () {
-      const v = routeFromHash();
+      const v = routeFromHash().view;
       if (v !== state.view) {
         // 直接改 hash 时，保证必要的状态已就位
         if (v !== 'home' && v !== 'settings' && !state.project) go('home');
@@ -2133,10 +2151,13 @@
       toast(T('toastInitFail', { msg: e.message }));
     });
 
-    const v = routeFromHash();
-    state.view = (v !== 'home' && !state.project) ? 'home' : v;
+    // 刷新恢复：首页 / 设置页直接渲染；
+    // 项目内页面（record / manage / export）先以首页垫底，再按 hash 里的项目 id 异步恢复原页面
+    const route = routeFromHash();
+    state.view = (route.view === 'settings') ? 'settings' : 'home';
     render();
     envBanner();
+    restoreRoute(route);
   }
 
   if (document.readyState === 'loading') {
