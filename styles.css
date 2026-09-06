@@ -30,6 +30,20 @@
 
 * { box-sizing: border-box; }
 
+/* 去掉点击 / 触摸时浏览器默认的蓝色高亮（Chrome 焦点环、Android tap-highlight），
+   仅保留键盘 Tab 导航时的深灰细环——既不会闪蓝，又保证键盘可用性 */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+button, a, input, select, textarea, [data-act], [role="button"] {
+  outline: none;
+}
+button::-moz-focus-inner { border: 0; }
+:focus-visible {
+  outline: 2px solid rgba(44, 44, 44, 0.45);
+  outline-offset: 2px;
+}
+
 /* 必须加这一条：.field 之类的 display 规则会盖掉 UA 样式表里的 [hidden]，
    导致 el.hidden = true 不起作用 */
 [hidden] { display: none !important; }
