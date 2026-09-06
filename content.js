@@ -23,7 +23,10 @@ window.Content = (function () {
     authorId: 'hcllmsx',
     authorUrl: 'https://space.bilibili.com/255947051',
     repo: 'https://github.com/hcllmsx/voice-archive',
-    version: '1.0.0'
+    // 应用版本号：设置页「关于」与导出 project.json 均读取此字段。
+    // 发版时无需手改：编辑根目录 VERSION 文件后运行 sync-version.bat，
+    // 会自动同步此字段，并让 sw.js 的缓存桶使用同一版本号。
+    version: '26.9.6'
   };
 
   /* ------------------------------------------------------------------ */

@@ -184,7 +184,6 @@
       secAbout: '关于',
       aboutVersion: '版本 {v}',
       aboutAuthor: '作者 {a}（{id}）',
-      aboutTech: '纯前端实现，无框架、无依赖、无网络请求。',
       secDanger: '恢复出厂设置',
       dangerHint: '清除这台设备上的所有项目、录音和设置，回到刚安装时的状态。',
       btnClearAll: '一键恢复出厂设置',

@@ -184,7 +184,6 @@
       secAbout: 'About',
       aboutVersion: 'Version {v}',
       aboutAuthor: 'By {a} ({id})',
-      aboutTech: 'Pure front-end: no framework, no dependencies, no network requests.',
       secDanger: 'Factory reset',
       dangerHint: 'Clears all projects, recordings and settings on this device — back to the state right after install.',
       btnClearAll: 'Reset to factory settings',

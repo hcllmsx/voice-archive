@@ -4,9 +4,14 @@
  *
  * Service Worker：只做离线缓存，策略保持简单。
  * 预缓存应用外壳，之后同源 GET 走「缓存优先 + 后台更新」。
+ *
+ * 缓存桶名直接使用应用版本号（与 content.js 的 version 保持一致）。
+ * 发版时无需手改：编辑根目录 VERSION 后运行 sync-version.bat，
+ * 会自动更新此处桶名；新桶生效后旧桶由 activate 自动清理。
  */
 
-var CACHE = 'voice-archive-v5';
+// 缓存桶 = voice-archive-<版本号>：由 sync-version.bat 维护，一般不要手改
+var CACHE = 'voice-archive-26.9.6';
 
 var SHELL = [
   './',

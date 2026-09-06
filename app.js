@@ -262,7 +262,10 @@
 
     html += '<section class="card">' +
       '<button class="btn ghost block" data-act="go-settings">' + esc(T('btnSettings')) + '</button>' +
-      '<button class="btn ghost block" data-act="go-install">' + esc(T('btnInstall')) + '</button>' +
+      // 用户选过「以后不再提示」后首页不再显示；仍可通过设置页的「查看添加步骤」查看
+      (!state.installDismissed
+        ? '<button class="btn ghost block" data-act="go-install">' + esc(T('btnInstall')) + '</button>'
+        : '') +
       '</section>';
 
     html += footerHTML();
@@ -1471,11 +1474,9 @@
 
     html += '<section class="card">' +
       '<h2>' + esc(T('secAbout')) + '</h2>' +
-      '<p class="muted small">' + esc(C.APP.name) + ' · ' + esc(C.APP.nameEn) +
-      '（' + esc(C.APP.slug) + '）<br>' +
+      '<p class="muted small">' + esc(C.APP.name) + ' · ' + esc(C.APP.nameEn) + '<br>' +
       esc(T('aboutVersion', { v: C.APP.version })) + '<br>' +
-      esc(T('aboutAuthor', { a: C.APP.author, id: C.APP.authorId })) + '<br>' +
-      esc(T('aboutTech')) + '</p>' +
+      esc(T('aboutAuthor', { a: C.APP.author, id: C.APP.authorId })) + '</p>' +
       '</section>';
 
     html += '<section class="card danger-zone">' +
@@ -1516,7 +1517,12 @@
   }
 
   /* ---------------- 安装引导 ---------------- */
-  function installGuide() {
+  /**
+   * 显示「添加到桌面」的操作步骤弹窗。
+   * allowDismiss === false（设置页的「查看添加步骤」入口）时，不出现「以后不再提示」；
+   * 首页按钮与第 2 次打开的自动弹窗才允许永久关闭，以便据此隐藏首页按钮。
+   */
+  function installGuide(allowDismiss) {
     const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
       (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     const steps = (isIos ? T('installStepsIos') : T('installStepsAndroid')).split('\n');
@@ -1527,7 +1533,9 @@
       '<p class="modal-text muted small">' + esc(T('installOptional')) + '</p>' +
       '<div class="modal-actions col">' +
       '<button class="btn primary" data-act="modal-close">' + esc(T('btnGotIt')) + '</button>' +
-      '<button class="btn ghost" data-act="install-dismiss">' + esc(T('btnNeverAgain')) + '</button>' +
+      (allowDismiss === false
+        ? ''
+        : '<button class="btn ghost" data-act="install-dismiss">' + esc(T('btnNeverAgain')) + '</button>') +
       '</div>'
     );
   }
@@ -1536,6 +1544,8 @@
     state.installDismissed = true;
     DB.setMeta('installDismissed', true);
     closeModal();
+    // 重渲染，让首页的「添加到桌面」按钮即时隐藏（设置页的查看步骤不受影响）
+    render();
   }
 
   /* ================================================================== */
@@ -1585,7 +1595,7 @@
       case 'go-manage': go('manage'); break;
       case 'go-export': go('export'); break;
       case 'go-settings': go('settings'); break;
-      case 'go-install': installGuide(); break;
+      case 'go-install': installGuide(state.view !== 'settings'); break;
       case 'install-dismiss': dismissInstall(); break;
       case 'env-dismiss': dismissEnvBanner(); break;
       case 'dismiss-privacy': dismissPrivacy(); break;
